@@ -1,11 +1,10 @@
+import logging
+
+from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from mcp import StdioServerParameters, stdio_client
 from strands import Agent
 from strands.models import BedrockModel
 from strands.tools.mcp import MCPClient
-import json
-import logging
-from bedrock_agentcore.runtime import BedrockAgentCoreApp
-from contextlib import ExitStack
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -13,6 +12,29 @@ logger = logging.getLogger(__name__)
 
 # Initialize the AgentCore App
 app = BedrockAgentCoreApp()
+
+aws_docs_client = MCPClient(
+    lambda: stdio_client(
+        StdioServerParameters(
+            command="uvx", args=["awslabs.aws-documentation-mcp-server@latest"]
+        )
+    )
+)
+
+aws_cdk_client = MCPClient(
+    lambda: stdio_client(
+        StdioServerParameters(command="uvx", args=["awslabs.cdk-mcp-server@latest"])
+    )
+)
+
+aws_pricing_client = MCPClient(
+    lambda: stdio_client(
+        StdioServerParameters(
+            command="uvx", args=["awslabs.aws-pricing-mcp-server@latest"]
+        )
+    )
+)
+
 
 # Initialize Bedrock model
 bedrock_model = BedrockModel(
@@ -35,119 +57,44 @@ When answering questions:
 - Always cite your sources when referencing specific AWS documentation
 """
 
-# Global variables to maintain MCP client instances and context
-mcp_clients = None
-exit_stack = None
-agent_instance = None
 
-def create_mcp_clients():
-    """Create and return MCP client instances"""
-    aws_docs_client = MCPClient(
-        lambda: stdio_client(
-            StdioServerParameters(
-                command="uvx", args=["awslabs.aws-documentation-mcp-server@latest"]
-            )
-        )
-    )
-
-    aws_cdk_client = MCPClient(
-        lambda: stdio_client(
-            StdioServerParameters(
-                command="uvx", args=["awslabs.cdk-mcp-server@latest"]
-            )
-        )
-    )
-
-    aws_pricing_client = MCPClient(
-        lambda: stdio_client(
-            StdioServerParameters(
-                command="uvx", args=["awslabs.aws-pricing-mcp-server@latest"]
-            )
-        )
-    )
-
-    
-    return aws_docs_client, aws_cdk_client, aws_pricing_client
-
-def initialize_agent():
-    """
-    Initialize the agent with MCP tools.
-    Ensures MCP clients are properly started and maintained.
-    """
-    global mcp_clients, exit_stack, agent_instance
-    
-    # If we already have an initialized agent, return it
-    if agent_instance is not None:
-        return agent_instance
-    
-    logger.info("Initializing MCP clients and agent...")
-    
-    # Create a new exit stack to manage context managers
-    exit_stack = ExitStack()
-    
-    # Create MCP clients
-    aws_docs_client, aws_cdk_client, aws_pricing_client = create_mcp_clients()
-    mcp_clients = [aws_docs_client, aws_cdk_client, aws_pricing_client]
-    
-    # Enter all MCP client contexts using the exit stack
-    for client in mcp_clients:
-        exit_stack.enter_context(client)
-    
-    # Get all tools from the MCP clients
-    all_tools = aws_docs_client.list_tools_sync() + aws_cdk_client.list_tools_sync() + aws_pricing_client.list_tools_sync()
-    
-    # Create the agent with the tools
-    agent_instance = Agent(tools=all_tools, model=bedrock_model, system_prompt=SYSTEM_PROMPT)
-    
-    logger.info("Agent initialized successfully with MCP tools")
-    return agent_instance
-
-def cleanup_resources():
-    """Clean up MCP client resources"""
-    global exit_stack, agent_instance, mcp_clients
-    
-    if exit_stack is not None:
-        logger.info("Cleaning up MCP client resources...")
-        exit_stack.close()
-        exit_stack = None
-        agent_instance = None
-        mcp_clients = None
-        logger.info("Resources cleaned up")
-
-# Define the entrypoint for AgentCore Runtime
 @app.entrypoint
-def docs_diag_agent(payload):
+def docs_diag_cdk_agent(payload):
     """
     Invoke the agent with a payload
-    
+
     Args:
         payload (dict): Contains the prompt from the user
-        
+
     Returns:
         str: The agent's response text
     """
     try:
         user_input = payload.get("prompt")
         logger.info(f"User input: {user_input}")
-        
+
         # Initialize agent with MCP tools (will reuse existing if already initialized)
-        agent = initialize_agent()
-        
-        # Get response from agent
-        response = agent(user_input)
-        
-        # Extract and return the text content from the response
-        return response.message['content'][0]['text']
+        with aws_docs_client, aws_pricing_client, aws_cdk_client:
+            all_tools = (
+                aws_docs_client.list_tools_sync()
+                + aws_pricing_client.list_tools_sync()
+                + aws_cdk_client.list_tools_sync()
+            )
+
+            agent = Agent(
+                tools=all_tools, model=bedrock_model, system_prompt=SYSTEM_PROMPT
+            )
+
+            # Get response from agent
+            response = agent(user_input)
+
+            # Extract and return the text content from the response
+            return response.message["content"][0]["text"]
     except Exception as e:
         logger.error(f"Error processing request: {e}", exc_info=True)
-        # Clean up resources on error to allow for fresh initialization on next request
-        cleanup_resources()
         raise
+
 
 # Run the app when executed directly
 if __name__ == "__main__":
-    try:
-        app.run()
-    finally:
-        # Ensure resources are cleaned up when the app exits
-        cleanup_resources()
+    app.run()
