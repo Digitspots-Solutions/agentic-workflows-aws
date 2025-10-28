@@ -1,4 +1,6 @@
+import os
 from datetime import datetime
+from pathlib import Path
 
 from mcp import StdioServerParameters, stdio_client
 from strands import Agent, tool
@@ -26,16 +28,6 @@ aws_diag_client = MCPClient(
     )
 )
 
-
-# Cost Analysis MCP Client
-cost_analysis_client = MCPClient(
-    lambda: stdio_client(
-        StdioServerParameters(
-            command="uvx", args=["awslabs.aws-pricing-mcp-server@latest"]
-        )
-    )
-)
-
 # PowerPoint MCP Client
 ppt_client = MCPClient(
     lambda: stdio_client(
@@ -48,126 +40,122 @@ ppt_client = MCPClient(
 
 
 bedrock_model = BedrockModel(
-    model_id="us.anthropic.claude-3-5-haiku-20241022-v1:0",
-    # model_id="us.anthropic.claude-sonnet-4-20250514-v1:0",
+    model_id="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    # model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0",
     temperature=0.7,
 )
 
-COST_ANALYSIS_AGENT_PROMPT = """
-You are a cost analysis specialist with expertise in:
-- Analyzing AWS cost structures and pricing models
-- Performing detailed cost projections and optimization recommendations
-- Creating cost comparison scenarios for migration planning
-- Identifying cost-saving opportunities across AWS services
-- Building cost monitoring and alerting strategies
-- Analyzing Reserved Instance and Savings Plan opportunities
-- Providing detailed cost breakdowns by service, region, and usage patterns
-Use the cost analysis tools to provide accurate financial projections and optimization strategies.
+RESEARCH_AGENT_PROMPT = """
+You are an AWS Solutions Architect researching services for cloud migrations.
+Research the appropriate AWS services and provide a brief summary of:
+- Key AWS services needed
+- How they fit together
+- Brief rationale for each service choice
+Keep your response concise and focused.
 """
 
-SA_AGENT_PROMPT = """
-You are an AWS Certified Solutions Architect with expertise in:
-- Creating detailed architecture diagrams using AWS services
-- Performing comprehensive cost analysis and optimization
-- Writing technical documentation and runbooks
-- Analyzing security and compliance requirements
-- Designing for high availability, fault tolerance, and disaster recovery
-Use the AWS documentation and diagram tools to create accurate, professional deliverables.
+DIAGRAM_AGENT_PROMPT = """
+You are an AWS Solutions Architect creating architecture diagrams.
+Create a clear, professional architecture diagram showing the AWS services and their connections.
+Save the diagram to ./shop-easy/architecture.png
+Keep the diagram clean and easy to understand.
 """
 
 
 @tool
-def cost_analysis_specialist(query: str) -> str:
+def research_aws_services(query: str) -> str:
     """
-    Analyze costs and create financial projections for migration.
-    This tool agent specializes in AWS cost analysis and optimization strategies.
+    Research AWS services needed for the migration.
+    Returns: Summary of AWS services and architecture approach.
     """
-    with aws_docs_client, cost_analysis_client:
-        all_tools = (
-            aws_docs_client.list_tools_sync() + cost_analysis_client.list_tools_sync()
-        )
-        cost_agent = Agent(
-            system_prompt=COST_ANALYSIS_AGENT_PROMPT,
-            tools=all_tools,
+    with aws_docs_client:
+        research_agent = Agent(
+            system_prompt=RESEARCH_AGENT_PROMPT,
+            tools=aws_docs_client.list_tools_sync(),
             model=bedrock_model,
         )
-        return str(cost_agent(query))
+        response = research_agent(query)
+        return str(response)
 
 
 @tool
-def presentation_creator(query: str) -> str:
+def create_architecture_diagram(architecture_summary: str) -> str:
     """
-    Create executive presentations with PowerPoint.
-    This tool agent specializes in creating professional presentations.
+    Create an architecture diagram based on the research.
+    Saves diagram to ./shop-easy/architecture.png
+    Args:
+        architecture_summary: The AWS services and architecture from research
+    Returns: Confirmation and diagram path.
+    """
+    with aws_diag_client:
+        diagram_agent = Agent(
+            system_prompt=DIAGRAM_AGENT_PROMPT,
+            tools=aws_diag_client.list_tools_sync(),
+            model=bedrock_model,
+        )
+        prompt = f"Create an architecture diagram for this design:\n\n{architecture_summary}\n\nSave to ./shop-easy/architecture.png"
+        response = diagram_agent(prompt)
+        return str(response)
+
+
+@tool
+def presentation_creator(content: str, diagram_path: str = None) -> str:
+    """
+    Create a 6-slide PowerPoint presentation.
+    Saves PowerPoint to ./shop-easy/ folder.
+    Args:
+        content: The research and architecture content to present
+        diagram_path: Optional path to architecture diagram to include
     """
     with ppt_client:
         ppt_agent = Agent(
-            system_prompt="""You create professional PowerPoint presentations for executive audiences.
-            Focus on clear visualizations, key metrics, and strategic recommendations.
-            Use charts, diagrams, and bullet points effectively.""",
+            system_prompt="""Create a concise 6-slide PowerPoint presentation:
+            Slide 1: Title slide - "ShopEasy AWS Migration Plan"
+            Slide 2: Current State Overview
+            Slide 3: Proposed Architecture (include diagram from ./shop-easy/architecture.png)
+            Slide 4: Key Benefits
+            Slide 5: Migration Approach
+            Slide 6: Next Steps
+            
+            Keep content brief and visual. Use bullet points (max 5 per slide).
+            IMPORTANT: Save the PowerPoint to './shop-easy/migration-plan.pptx'""",
             tools=ppt_client.list_tools_sync(),
             model=bedrock_model,
         )
-        return str(ppt_agent(query))
+        
+        prompt = f"Create a 6-slide presentation with this content:\n\n{content}"
+        prompt += "\n\nInclude the diagram from ./shop-easy/architecture.png on slide 3."
+        prompt += "\nSave the PowerPoint as ./shop-easy/migration-plan.pptx"
+        
+        return str(ppt_agent(prompt))
 
 
-@tool
-def architecture_analyst(query: str) -> str:
-    """
-    Create architecture diagrams and perform cost analysis.
-    This tool agent specializes in AWS architecture design and cost optimization.
-    """
-    with aws_docs_client, aws_diag_client:
-        all_tools = (
-            aws_docs_client.list_tools_sync() + aws_diag_client.list_tools_sync()
-        )
-        sa_agent = Agent(
-            system_prompt=SA_AGENT_PROMPT, tools=all_tools, model=bedrock_model
-        )
-        response = sa_agent(query)
-        # Extract diagram path if created
-        if "diagram" in str(response).lower():
-            return f"{response}\n\nNote: Check the output for the diagram file path."
-        return str(response)
+
 
 
 def create_migration_orchestrator():
     """
     Create the main orchestrator agent for cloud migration planning.
-    This orchestrator coordinates all specialized tool agents to deliver
-    a comprehensive migration plan.
+    Streamlined workflow: Research → Diagram → PowerPoint
     """
 
     MIGRATION_ORCHESTRATOR_PROMPT = """
-    You are a Cloud Migration Coordinator orchestrating a comprehensive migration plan to AWS.
+    You are a Cloud Migration Coordinator. Create a migration plan quickly and efficiently.
     
-    Your role is to:
-    1. Analyze the migration requirements
-    2. Delegate specific tasks to specialized agents
-    3. Synthesize outputs into a cohesive migration strategy
+    Process (execute in this exact order):
+    1. Use research_aws_services to research the appropriate AWS services
+    2. Use create_architecture_diagram with the research results to create a diagram
+    3. Use presentation_creator to create a 6-slide PowerPoint with all the findings
     
-    Available tool agents:
-    - architecture_analyst: For diagrams and architectural design
-    - cost_analysis_specialist: For cost analysis and financial projections
-    - presentation_creator: For executive presentations
-    
-    For migration projects, follow this process:
-    1. Use architecture_analyst to create diagrams and architectural documentation
-    2. Use cost_analysis_specialist to analyze costs and create financial projections
-    3. Use presentation_creator to build an executive presentation
-    
-    Always ensure:
-    - Security best practices are followed
-    - Cost optimization is considered
-    - High availability and disaster recovery are planned
-    - Final migration plan consolidates all technical and financial analysis
+    Keep everything concise. The goal is to produce a PowerPoint presentation quickly.
+    Pass the full context from each step to the next step.
     """
 
     orchestrator = Agent(
         system_prompt=MIGRATION_ORCHESTRATOR_PROMPT,
         tools=[
-            architecture_analyst,
-            cost_analysis_specialist,
+            research_aws_services,
+            create_architecture_diagram,
             presentation_creator,
         ],
         model=bedrock_model,
@@ -178,16 +166,20 @@ def create_migration_orchestrator():
 
 def run_cloud_migration_demo():
     """
-    Demo: Cloud Migration Planning using Agents as Tools pattern
-
-    This demonstrates how an orchestrator agent delegates to specialized
-    tool agents to create a comprehensive migration plan.
+    Demo: Quick Cloud Migration PowerPoint using Agents as Tools
+    
+    Streamlined workflow: Research → Diagram → PowerPoint (6 slides)
     """
     print("=" * 70)
-    print("Cloud Migration Planning (Agents as Tools Pattern)")
+    print("Quick Cloud Migration PowerPoint Generator")
     print("=" * 70)
-    print("\nPattern: Hierarchical delegation with specialized tool agents")
-    print("Scenario: Planning cloud migration for e-commerce company\n")
+    print("\nWorkflow: Research → Diagram → PowerPoint (6 slides)")
+    print("Scenario: E-commerce migration to AWS\n")
+    
+    # Create output directory
+    output_dir = Path("./shop-easy")
+    output_dir.mkdir(exist_ok=True)
+    print(f"📁 Created output directory: {output_dir.absolute()}\n")
 
     # Track execution start time
     start_time = datetime.now()
@@ -195,39 +187,25 @@ def run_cloud_migration_demo():
     # Create the orchestrator
     orchestrator = create_migration_orchestrator()
 
-    # Define the migration request
+    # Simplified migration request
     migration_request = """
-    Plan a comprehensive cloud migration for "ShopEasy" e-commerce company:
+    Create a migration plan PowerPoint for "ShopEasy" e-commerce:
     
-    Current State:
-    - On-premise monolithic Java application
-    - MySQL database with 50TB of data
-    - 1 million daily active users
-    - Peak traffic during sales events (10x normal)
-    - Legacy file storage system with 100TB of product images
+    Current: On-premise Java app, MySQL database, 1M daily users
+    Goal: Migrate to AWS with high availability and scalability
     
-    Requirements:
-    - Zero downtime migration
-    - High availability across multiple regions
-    - Cost optimization (current spend: $100K/month)
-    - Compliance with PCI-DSS for payment processing
-    - Improved performance and scalability
+    Create:
+    1. Research AWS services needed (ECS, RDS, S3, CloudFront, etc.)
+    2. Generate an architecture diagram and save to ./shop-easy/architecture.png
+    3. Create a 6-slide PowerPoint presentation and save to ./shop-easy/migration-plan.pptx
     
-    Constraints:
-    - 6-month migration timeline
-    - $500K migration budget
-    - Limited DevOps expertise in current team
-    - Must maintain integration with existing ERP system
-    
-    Deliverables needed:
-    1. Architecture diagrams with migration phases
-    2. Detailed cost analysis and projections
-    3. Migration runbook and documentation
-    4. Executive presentation for board approval
+    Keep it concise and focused on the key points.
     """
 
-    print("📋 Processing migration request...")
-    print("🤖 Orchestrator delegating to specialized agents...\n")
+    print("📋 Starting migration planning...")
+    print("🔍 Step 1: Researching AWS services...")
+    print("🎨 Step 2: Creating architecture diagram...")
+    print("📊 Step 3: Generating 6-slide PowerPoint...\n")
 
     # Execute the orchestrated migration planning
     result = orchestrator(migration_request)
@@ -235,12 +213,15 @@ def run_cloud_migration_demo():
     # Track execution end time
     end_time = datetime.now()
     execution_time = (end_time - start_time).total_seconds()
-    print(f"Execution time: {execution_time:.2f} seconds")
 
-    print("\n✅ Migration Plan Generated!")
+    print(f"\n⏱️  Execution time: {execution_time:.2f} seconds")
+    print("\n✅ PowerPoint Generated!")
     print("-" * 70)
     print(result)
     print("-" * 70)
+    print("\n� Ohutput files saved to ./shop-easy/ folder:")
+    print("   - architecture.png (Architecture diagram)")
+    print("   - migration-plan.pptx (PowerPoint presentation)")
 
 
 run_cloud_migration_demo()

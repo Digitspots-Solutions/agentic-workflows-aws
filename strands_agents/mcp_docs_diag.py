@@ -26,12 +26,12 @@ aws_diag_client = MCPClient(
 
 
 bedrock_model = BedrockModel(
-    model_id="us.anthropic.claude-3-5-haiku-20241022-v1:0",
+    model_id="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
     temperature=0.7,
 )
 
 SYSTEM_PROMPT = """
-You are an expert AWS Certified Solutions Architect. Your role is to help customers understand best practices on building on AWS. You can querying the AWS Documentation and generate diagrams. Make sure to tell the customer the full file path of the diagram.
+You are an expert AWS Certified Solutions Architect. Your role is to help customers understand best practices on building on AWS. You can querying the AWS Documentation and generate diagrams. Save the output to generated-diagrams folder in the current path. Make sure to tell the customer the full file path of the diagram.
 """
 
 with aws_diag_client, aws_docs_client:

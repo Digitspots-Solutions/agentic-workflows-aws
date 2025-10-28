@@ -1,21 +1,14 @@
-import functools
-import operator
-from typing import Annotated, Literal, Sequence, TypedDict
+import subprocess
+import sys
+from typing import Annotated
 
+from langchain.agents import create_agent
 from langchain_aws import ChatBedrock
 from langchain_community.tools import DuckDuckGoSearchRun
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
-from langchain_experimental.utilities import PythonREPL
-from langgraph.graph import END, START, StateGraph
-from langgraph.prebuilt import ToolNode
-
-
-# Define the state object passed between nodes in the graph
-class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], operator.add]
-    sender: str
+from langgraph.graph import START, StateGraph, MessagesState
+from langgraph.types import Command
 
 
 # Tool definitions
@@ -28,119 +21,83 @@ def setup_tools():
         code: Annotated[str, "The python code to execute to generate your chart."],
     ):
         """Execute Python code and return the result."""
-        repl = PythonREPL()
         try:
-            result = repl.run(code)
-        except BaseException as e:
+            result = subprocess.run(
+                [sys.executable, "-c", code],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            if result.returncode != 0:
+                return f"Failed to execute. Error: {result.stderr}"
+            output = result.stdout if result.stdout else "Code executed successfully"
+            return f"Successfully executed:\n```python\n{code}\n```\nStdout: {output}"
+        except subprocess.TimeoutExpired:
+            return "Execution timed out after 30 seconds"
+        except Exception as e:
             return f"Failed to execute. Error: {repr(e)}"
-        result_str = f"Successfully executed:\n```python\n{code}\n```\nStdout: {result}"
-        return (
-            result_str
-            + "\n\nIf you have completed all tasks, respond with FINAL ANSWER."
-        )
 
     return [duck_duck_go_tool, python_repl]
 
 
-# Agent creation
-def create_agent(llm, tools, system_message: str):
-    """Create an agent with specified LLM, tools, and system message."""
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                "You are a helpful AI assistant, collaborating with other assistants. "
-                "Use the provided tools to progress towards answering the question. "
-                "If you are unable to fully answer, that's OK, another assistant with different tools "
-                "will help where you left off. Execute what you can to make progress. "
-                "If you or any of the other assistants have the final answer or deliverable, "
-                "prefix your response with FINAL ANSWER so the team knows to stop. "
-                "You have access to the following tools: {tool_names}.\n{system_message}",
-            ),
-            MessagesPlaceholder(variable_name="messages"),
-        ]
-    )
-    prompt = prompt.partial(
-        system_message=system_message,
-        tool_names=", ".join([tool.name for tool in tools]),
-    )
-    return prompt | llm.bind_tools(tools)
-
-
-# Node functions
-def agent_node(state, agent, name):
-    """Process the state through an agent and return the updated state."""
-    result = agent.invoke(state)
-    if not isinstance(result, ToolMessage):
-        result = AIMessage(**result.model_dump(exclude={"type", "name"}), name=name)
-    return {
-        "messages": [result],
-        "sender": name,
-    }
+# Handoff tool creation
+def create_handoff_tool(*, agent_name: str, description: str):
+    """Create a tool that transfers control to another agent."""
+    name = f"transfer_to_{agent_name}"
+    
+    @tool(name, description=description)
+    def handoff_tool() -> Command:
+        return Command(
+            goto=agent_name,
+            graph=Command.PARENT,
+        )
+    return handoff_tool
 
 
 def setup_workflow(llm, tools):
-    """Set up and return the workflow graph."""
-    # Create agents
+    """Set up and return the workflow graph using modern LangGraph patterns."""
+    
+    # Create handoff tools
+    transfer_to_chart = create_handoff_tool(
+        agent_name="chart_generator",
+        description="Transfer to chart generator when you have data ready for visualization"
+    )
+    transfer_to_research = create_handoff_tool(
+        agent_name="Researcher",
+        description="Transfer to researcher when you need more data or information"
+    )
+    
+    # Create agents using create_agent (LangGraph v1)
     research_agent = create_agent(
-        llm, tools, "You should provide accurate data for the chart_generator to use."
+        llm,
+        tools=[tools[0], transfer_to_chart],  # DuckDuckGo + handoff
+        system_prompt="You are a research assistant. Your job is to find accurate data. "
+                     "Once you have the data, transfer to the chart generator.",
+        name="Researcher"
     )
+    
     chart_agent = create_agent(
-        llm, tools, "Any charts you display will be visible by the user."
+        llm,
+        tools=[tools[1], transfer_to_research],  # Python REPL + handoff
+        system_prompt="You are a chart generator. Create visualizations using matplotlib. "
+                     "If you need more data, transfer to the researcher.",
+        name="chart_generator"
     )
-
-    # Create nodes
-    research_node = functools.partial(
-        agent_node, agent=research_agent, name="Researcher"
-    )
-    chart_node = functools.partial(
-        agent_node, agent=chart_agent, name="chart_generator"
-    )
-    tool_node = ToolNode(tools)
-
+    
     # Set up the workflow
-    workflow = StateGraph(AgentState)
-    workflow.add_node("Researcher", research_node)
-    workflow.add_node("chart_generator", chart_node)
-    workflow.add_node("call_tool", tool_node)
-
-    # Add edges
-    workflow.add_conditional_edges(
-        "Researcher",
-        router,
-        {"continue": "chart_generator", "call_tool": "call_tool", "__end__": END},
-    )
-    workflow.add_conditional_edges(
-        "chart_generator",
-        router,
-        {"continue": "Researcher", "call_tool": "call_tool", "__end__": END},
-    )
-    workflow.add_conditional_edges(
-        "call_tool",
-        lambda x: x["sender"],
-        {"Researcher": "Researcher", "chart_generator": "chart_generator"},
-    )
+    workflow = StateGraph(MessagesState)
+    workflow.add_node(research_agent)
+    workflow.add_node(chart_agent)
     workflow.add_edge(START, "Researcher")
-
+    
     return workflow.compile()
-
-
-# Router function
-def router(state) -> Literal["call_tool", "__end__", "continue"]:
-    """Determine the next step in the workflow based on the current state."""
-    last_message = state["messages"][-1]
-    if last_message.tool_calls:
-        return "call_tool"
-    if "FINAL ANSWER" in last_message.content:
-        return "__end__"
-    return "continue"
 
 
 # Main execution
 def main():
     # Set up the LLM
     llm = ChatBedrock(
-        model_id="us.anthropic.claude-3-5-haiku-20241022-v1:0",
+        model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0",
         model_kwargs=dict(temperature=0),
         region_name="us-west-2",
     )
@@ -152,6 +109,9 @@ def main():
     graph = setup_workflow(llm, tools)
 
     # Execute the workflow
+    print("Starting multi-agent workflow...")
+    print("=" * 60)
+    
     events = graph.stream(
         {
             "messages": [
@@ -168,7 +128,7 @@ def main():
     # Print the results
     for s in events:
         print(s)
-        print("----")
+        print("-" * 60)
 
 
 if __name__ == "__main__":
