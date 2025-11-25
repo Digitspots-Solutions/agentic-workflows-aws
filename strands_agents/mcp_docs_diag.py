@@ -15,11 +15,8 @@ aws_diag_client = MCPClient(
     lambda: stdio_client(
         StdioServerParameters(
             command="uvx",
-            args=[
-                "--with",
-                "sarif-om,jschema_to_python",
-                "awslabs.aws-diagram-mcp-server@latest",
-            ],
+            args=["awslabs.aws-diagram-mcp-server"],
+            env={"FASTMCP_LOG_LEVEL": "ERROR"},
         )
     )
 )
@@ -32,6 +29,9 @@ bedrock_model = BedrockModel(
 
 SYSTEM_PROMPT = """
 You are an expert AWS Certified Solutions Architect. Your role is to help customers understand best practices on building on AWS. You can querying the AWS Documentation and generate diagrams. Save the output to generated-diagrams folder in the current path. Make sure to tell the customer the full file path of the diagram.
+When creating diagrams:
+- Call list_icons (or an equivalent tool) to discover the exact AWS icon identifiers you need.
+- When invoking generate_diagram, include those icon identifiers so every node uses the official AWS glyphs instead of simple shapes.
 """
 
 with aws_diag_client, aws_docs_client:

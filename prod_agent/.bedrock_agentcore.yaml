@@ -1,0 +1,51 @@
+default_agent: cdk_agent_core
+agents:
+  cdk_agent_core:
+    name: cdk_agent_core
+    entrypoint: /Users/MAC/projects/agentic-workshop/prod_agent/cdk_agent_core.py
+    deployment_type: container
+    runtime_type: null
+    platform: linux/arm64
+    container_runtime: docker
+    source_path: /Users/MAC/projects/agentic-workshop/prod_agent
+    aws:
+      execution_role: arn:aws:iam::929557547206:role/agentcore-cdk_agent_core-role
+      execution_role_auto_create: true
+      account: '929557547206'
+      region: us-east-1
+      ecr_repository: 929557547206.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-cdk_agent_core
+      ecr_auto_create: false
+      s3_path: null
+      s3_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+      lifecycle_configuration:
+        idle_runtime_session_timeout: null
+        max_lifetime: null
+    bedrock_agentcore:
+      agent_id: cdk_agent_core-vf73Jw5hbT
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:929557547206:runtime/cdk_agent_core-vf73Jw5hbT
+      agent_session_id: 7479b40c-22ab-4247-9c0e-4441b98c76b8
+    codebuild:
+      project_name: bedrock-agentcore-cdk_agent_core-builder
+      execution_role: arn:aws:iam::929557547206:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-a6ddf3fc76
+      source_bucket: bedrock-agentcore-codebuild-sources-929557547206-us-east-1
+    memory:
+      mode: STM_ONLY
+      memory_id: cdk_agent_core_mem-ZPnib163qO
+      memory_arn: arn:aws:bedrock-agentcore:us-east-1:929557547206:memory/cdk_agent_core_mem-ZPnib163qO
+      memory_name: cdk_agent_core_mem
+      event_expiry_days: 30
+      first_invoke_memory_check_done: true
+      was_created_by_toolkit: true
+    identity:
+      credential_providers: []
+      workload: null
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null
