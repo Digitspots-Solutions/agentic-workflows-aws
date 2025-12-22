@@ -21,12 +21,31 @@ NC='\033[0m' # No Color
 echo -e "${YELLOW}Checking Python installation...${NC}"
 if ! command -v python3 &> /dev/null; then
     echo -e "${RED}❌ Python 3 is not installed.${NC}"
-    echo "Please install Python 3.11 or higher"
+    echo "Please install Python 3.10 or higher"
     exit 1
 fi
 
-PYTHON_VERSION=$(python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2)
+PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
+PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
+PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d'.' -f2)
+
 echo -e "${GREEN}✅ Python ${PYTHON_VERSION} found${NC}"
+
+# Check if Python version is sufficient (need 3.10+)
+if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 10 ]); then
+    echo -e "${RED}❌ Python 3.10 or higher required (you have ${PYTHON_VERSION})${NC}"
+    echo ""
+    echo "Strands-agents requires Python 3.10+"
+    echo ""
+    echo "Options:"
+    echo "  1) Upgrade Python to 3.10+ and run this script again"
+    echo "  2) Run demo mode (works with any Python 3.x):"
+    echo "     python3 test_assistant_demo.py"
+    echo ""
+    echo "See QUICK_START.md for Python upgrade instructions"
+    exit 1
+fi
+
 echo ""
 
 # Check pip installation
