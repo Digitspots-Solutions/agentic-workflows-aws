@@ -1,0 +1,21 @@
+code,name,credits,prerequisites,description,semester,lecturer,department
+CSC201,Computer Programming II,3,CSC101,Advanced programming concepts and data structures,Second Semester,Dr. Adeyemi O.,Computer Science
+CSC301,Database Management Systems,3,CSC201,Database design and SQL fundamentals,First Semester,Prof. Ibrahim S.,Computer Science
+CSC302,Operating Systems,3,CSC201,Process and memory management,Second Semester,Dr. Ogunleye T.,Computer Science
+CSC303,Web Programming,3,CSC201,HTML CSS JavaScript and frameworks,First Semester,Mr. Adeleke M.,Computer Science
+CSC401,Software Engineering,4,CSC301,SDLC design patterns testing,First Semester,Prof. Olaniyan K.,Computer Science
+CSC402,Artificial Intelligence,4,CSC301,Machine learning and neural networks,Second Semester,Dr. Akinwale A.,Computer Science
+CSC403,Computer Networks,3,CSC302,Network protocols and security,First Semester,Dr. Adewale R.,Computer Science
+CSC404,Compiler Construction,4,CSC301,Lexical analysis and parsing,Second Semester,Prof. Oladele S.,Computer Science
+CSC405,Mobile App Development,3,CSC303,iOS and Android development,First Semester,Mr. Badmus T.,Computer Science
+CSC501,Advanced Algorithms,4,CSC401,Algorithm design and optimization,First Semester,Prof. Ibrahim S.,Computer Science
+MTH201,Linear Algebra,3,MTH101,Matrices vectors and linear systems,First Semester,Dr. Balogun F.,Mathematics
+MTH301,Discrete Mathematics,3,MTH201,Logic set theory and graph theory,First Semester,Dr. Balogun F.,Mathematics
+MTH302,Numerical Analysis,3,MTH201,Numerical methods for computation,Second Semester,Prof. Akinola J.,Mathematics
+MTH401,Abstract Algebra,4,MTH301,Groups rings and fields,First Semester,Prof. Akinola J.,Mathematics
+ENG201,Technical Writing,2,,Communication and documentation,Second Semester,Dr. Ogunlade M.,English
+ENG301,Research Methodology,3,,Research design and ethics,First Semester,Prof. Adeleke O.,English
+PHY201,Physics for Computer Science,3,PHY101,Electromagnetism and optics,Second Semester,Dr. Ajayi K.,Physics
+CHM201,Chemistry for Technology,3,CHM101,Organic and inorganic chemistry,First Semester,Dr. Adeleke P.,Chemistry
+BIO301,Bioinformatics,3,CSC201,Computational biology,First Semester,Dr. Olatunde S.,Biology
+STA301,Statistics for Computing,3,MTH201,Probability and statistical inference,Second Semester,Dr. Adeyinka L.,Statistics
