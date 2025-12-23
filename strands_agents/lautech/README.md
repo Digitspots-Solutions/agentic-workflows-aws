@@ -461,21 +461,159 @@ Before going live:
 
 ---
 
+## 🌐 Part C: Production Web Dashboard
+
+**Beautiful web interface that calls the deployed AgentCore agent**
+
+### Quick Start
+
+```bash
+cd strands_agents/lautech
+
+# Set AWS credentials (if not already configured)
+export AWS_ACCESS_KEY_ID="your-key"
+export AWS_SECRET_ACCESS_KEY="your-secret"
+export AWS_DEFAULT_REGION="us-east-1"
+
+# Launch dashboard
+./run_dashboard.sh
+```
+
+Dashboard opens at: **http://localhost:8501**
+
+### Features
+
+- ✅ Calls deployed AgentCore agent (not local Strands)
+- ✅ Beautiful LAUTECH branding (green & gold)
+- ✅ Mobile responsive design
+- ✅ Session management
+- ✅ Usage analytics
+- ✅ Quick action buttons
+- ✅ Real-time chat interface
+
+### Manual Launch
+
+```bash
+# Install dependencies
+pip3 install streamlit boto3
+
+# Set agent ID (optional, has default)
+export LAUTECH_AGENT_ID="lautech_agentcore-U7qNy1GPsE"
+
+# Run
+streamlit run web_dashboard.py
+```
+
+### Configuration
+
+Edit agent ID in sidebar settings or set environment variable:
+
+```bash
+export LAUTECH_AGENT_ID="your-agent-id"
+```
+
+Get your agent ID:
+
+```bash
+agentcore status
+```
+
+### Deploy to Server
+
+**Option 1: Streamlit Cloud (Free)**
+
+1. Push to GitHub
+2. Go to https://streamlit.io/cloud
+3. Deploy from repo: `strands_agents/lautech/web_dashboard.py`
+4. Add secrets:
+   ```
+   AWS_ACCESS_KEY_ID = "..."
+   AWS_SECRET_ACCESS_KEY = "..."
+   AWS_DEFAULT_REGION = "us-east-1"
+   LAUTECH_AGENT_ID = "..."
+   ```
+
+**Option 2: Self-Hosted (EC2/VPS)**
+
+```bash
+# Install dependencies
+pip3 install streamlit boto3
+
+# Run with nohup
+nohup streamlit run web_dashboard.py --server.port 8501 &
+
+# Or use systemd service
+sudo nano /etc/systemd/system/lautech-dashboard.service
+```
+
+Sample systemd service:
+
+```ini
+[Unit]
+Description=LAUTECH Dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/strands_agents/lautech
+Environment="AWS_ACCESS_KEY_ID=..."
+Environment="AWS_SECRET_ACCESS_KEY=..."
+Environment="AWS_DEFAULT_REGION=us-east-1"
+Environment="LAUTECH_AGENT_ID=..."
+ExecStart=/usr/bin/python3 -m streamlit run web_dashboard.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**Option 3: Docker**
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY web_dashboard.py .
+
+EXPOSE 8501
+
+CMD ["streamlit", "run", "web_dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
+```
+
+```bash
+docker build -t lautech-dashboard .
+docker run -p 8501:8501 \
+  -e AWS_ACCESS_KEY_ID="..." \
+  -e AWS_SECRET_ACCESS_KEY="..." \
+  -e AWS_DEFAULT_REGION="us-east-1" \
+  -e LAUTECH_AGENT_ID="..." \
+  lautech-dashboard
+```
+
+---
+
 ## 🚀 Next Steps
 
-### Phase 1 (Current)
+### Phase 1 (Completed ✅)
 - ✅ Multi-agent system
 - ✅ AgentCore integration
 - ✅ Database backend
-- ✅ Web interface
+- ✅ Data management system (CSV import)
+- ✅ Production web dashboard
 
-### Phase 2 (Next)
-- [ ] WhatsApp integration
-- [ ] SMS notifications
-- [ ] Email alerts
-- [ ] Admin dashboard
+### Phase 2 (Current)
+- [ ] Admin dashboard (Part D)
+- [ ] Production hardening (Part E)
+- [ ] WhatsApp integration (Part B)
 
 ### Phase 3 (Future)
+- [ ] SMS notifications
+- [ ] Email alerts
 - [ ] Voice interface
 - [ ] Multi-language support
 - [ ] Mobile app
