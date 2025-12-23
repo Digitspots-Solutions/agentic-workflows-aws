@@ -597,6 +597,191 @@ docker run -p 8501:8501 \
 
 ---
 
+## 🛠️ Part D: Admin Panel for Staff
+
+**Comprehensive management interface for authorized staff**
+
+### Quick Start
+
+```bash
+cd strands_agents/lautech
+
+# Launch admin panel
+./run_admin.sh
+```
+
+Admin panel opens at: **http://localhost:8502**
+
+**Default Credentials:** admin / lautech2024
+
+⚠️ **IMPORTANT:** Change credentials for production!
+
+### Features
+
+#### 📚 Course Management
+- View all courses in searchable table
+- Add new courses with validation
+- Edit existing courses
+- Delete courses
+- Export to CSV
+
+#### 💰 Fee Management
+- View all fee records
+- Add new fees (tuition, administrative, lab, etc.)
+- Delete fees
+- Export to CSV
+
+#### 📅 Calendar Management
+- View academic calendar
+- Add events (registration, exams, deadlines)
+- Delete events
+- Export to CSV
+
+#### 🏠 Hostel Management
+- View all hostels
+- Add new hostels with capacity and facilities
+- Update hostel status
+- Delete hostels
+- Export to CSV
+
+#### 📥 Import/Export
+- Export all tables to CSV
+- Import CSV files (via import_data.py script)
+- Database backup functionality
+
+#### ⚙️ Settings
+- View system information
+- Database statistics
+- Backup management
+
+### Screenshots
+
+**Dashboard:**
+- System overview with metrics
+- Database health monitoring
+- Recent activity log
+
+**Course Management:**
+- Tabbed interface: View All | Add New | Edit/Delete
+- Form validation
+- Inline editing
+
+**Data Export:**
+- One-click CSV downloads for all tables
+- Backup creation with timestamps
+
+### Authentication
+
+**Current (Demo):**
+- Simple username/password (admin/lautech2024)
+- Session-based authentication
+
+**Production (Part E TODO):**
+- University SSO integration
+- LDAP/Active Directory
+- Role-based access control (RBAC)
+- Multi-factor authentication (MFA)
+- Audit logging
+
+### Running Both Dashboards
+
+```bash
+# Terminal 1: User dashboard (port 8501)
+./run_dashboard.sh
+
+# Terminal 2: Admin panel (port 8502)
+./run_admin.sh
+```
+
+Users access: http://localhost:8501
+Staff access: http://localhost:8502
+
+### Deploy to Production
+
+**Option 1: Same Server, Different Ports**
+
+```bash
+# User dashboard
+streamlit run web_dashboard.py --server.port 8501 &
+
+# Admin panel (with authentication)
+streamlit run admin_panel.py --server.port 8502 &
+```
+
+**Option 2: Separate Subdomains**
+
+```nginx
+# nginx config
+server {
+    server_name students.lautech.edu.ng;
+    location / {
+        proxy_pass http://localhost:8501;
+    }
+}
+
+server {
+    server_name admin.lautech.edu.ng;
+    location / {
+        proxy_pass http://localhost:8502;
+        # Additional IP whitelisting or auth
+        allow 10.0.0.0/8;  # Internal network only
+        deny all;
+    }
+}
+```
+
+**Option 3: Firewall Protection**
+
+```bash
+# Allow admin panel only from campus network
+sudo ufw allow from 10.0.0.0/8 to any port 8502
+sudo ufw deny 8502
+```
+
+### Security Checklist (Production)
+
+- [ ] Replace demo credentials with real authentication
+- [ ] Integrate with university SSO/LDAP
+- [ ] Enable HTTPS (SSL certificates)
+- [ ] Restrict admin access to campus network
+- [ ] Add rate limiting
+- [ ] Enable audit logging
+- [ ] Add input validation and sanitization
+- [ ] Implement CSRF protection
+- [ ] Regular security updates
+- [ ] Database backup automation
+
+### API for Integration
+
+For programmatic access (Part E):
+
+```python
+# REST API wrapper around admin functions
+from flask import Flask, request, jsonify
+import sqlite3
+
+app = Flask(__name__)
+
+@app.route('/api/courses', methods=['GET', 'POST'])
+def manage_courses():
+    if request.method == 'GET':
+        # Return all courses
+        conn = sqlite3.connect('lautech_data.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM courses")
+        courses = cursor.fetchall()
+        conn.close()
+        return jsonify(courses)
+
+    elif request.method == 'POST':
+        # Add new course
+        data = request.json
+        # ... add course logic
+        return jsonify({'status': 'success'})
+```
+
+---
+
 ## 🚀 Next Steps
 
 ### Phase 1 (Completed ✅)
