@@ -782,6 +782,227 @@ def manage_courses():
 
 ---
 
+## 🏭 Part E: Production Hardening
+
+**Enterprise-grade deployment with monitoring, backups, and security**
+
+### Quick Reference
+
+📖 **Full Guide:** See [PRODUCTION.md](PRODUCTION.md) for complete documentation
+
+### Key Components
+
+#### 1. Database Migration (SQLite → RDS PostgreSQL)
+
+```bash
+cd strands_agents/lautech
+
+# Dry run (see what would be migrated)
+python3 scripts/migrate_to_rds.py --dry-run
+
+# Perform migration
+python3 scripts/migrate_to_rds.py
+
+# Verify migration
+python3 scripts/migrate_to_rds.py --verify
+```
+
+**Prerequisites:**
+- RDS PostgreSQL instance created
+- Credentials in AWS Secrets Manager (`lautech/db/credentials`)
+- Install: `pip install psycopg2-binary`
+
+#### 2. Automated Backups
+
+```bash
+# Manual backup to S3
+python3 scripts/backup_database.py
+
+# Local backup only
+python3 scripts/backup_database.py --local
+```
+
+**Automated Schedule:**
+- Daily backups at 3 AM (EventBridge + Lambda)
+- 30-day retention in S3 Standard
+- After 30 days: Move to Glacier
+- After 90 days: Auto-delete
+
+#### 3. Monitoring & Logging
+
+**CloudWatch Metrics:**
+- Query count by agent
+- Response time (average, p95, p99)
+- Error rate and types
+- Database connections
+- Lambda concurrency
+
+**CloudWatch Logs:**
+- Application logs with structured JSON
+- AgentCore execution logs
+- RDS query logs
+- Web dashboard access logs
+
+**Alarms:**
+- High error rate (>5%)
+- Slow response time (>2s average)
+- Database connection failures
+- High Lambda errors
+
+#### 4. Security Hardening
+
+**Authentication:**
+- [ ] University SSO integration
+- [ ] LDAP/Active Directory
+- [ ] Role-based access control (RBAC)
+- [ ] Multi-factor authentication (MFA)
+- [ ] Session management with timeout
+
+**Network Security:**
+- VPC with private subnets for RDS
+- Security groups with least privilege
+- WAF with rate limiting and geo-blocking
+- SSL/TLS encryption (HTTPS only)
+- VPN/Direct Connect for admin access
+
+**Data Security:**
+- Database encryption at rest (RDS)
+- Secrets Manager for credentials
+- S3 encryption for backups
+- CloudTrail for audit logging
+- Regular security scans
+
+#### 5. Performance Optimization
+
+**Caching:**
+- Redis/ElastiCache for frequently accessed data
+- CloudFront CDN for static assets
+- Application-level caching for agent responses
+
+**Database:**
+- Connection pooling
+- Query optimization with indexes
+- Read replicas for heavy read workload
+- Partitioning for large tables
+
+**Application:**
+- Async processing for non-blocking operations
+- Batch API calls to reduce Bedrock costs
+- Lazy loading for admin panel data
+- Compression for API responses
+
+#### 6. High Availability
+
+**Multi-AZ Deployment:**
+```
+Region: us-east-1
+├── AZ-1
+│   ├── Application (ECS/EC2)
+│   ├── RDS Primary
+│   └── Cache Primary
+└── AZ-2
+    ├── Application (ECS/EC2)
+    ├── RDS Standby
+    └── Cache Replica
+```
+
+**Auto Scaling:**
+- Application auto-scales based on CPU/memory
+- RDS read replicas based on connection count
+- Lambda concurrency limits
+
+**Disaster Recovery:**
+- RTO: 15 minutes
+- RPO: 5 minutes (automated backups)
+- Cross-region backup replication
+- Documented failover procedures
+
+### Cost Estimation
+
+| Tier | Configuration | Monthly Cost |
+|------|--------------|--------------|
+| **Starter** | t3.small EC2, db.t3.micro RDS | ~$80 |
+| **Standard** | t3.medium EC2, db.t3.medium RDS Multi-AZ | ~$220 |
+| **Production** | ECS Fargate, db.m5.large RDS Multi-AZ, Redis | ~$450 |
+
+💡 **Save 30-40%** with Reserved Instances for 1-year commitment
+
+### Deployment Steps
+
+1. **Pre-Production**
+   ```bash
+   # Test migration locally
+   python3 scripts/migrate_to_rds.py --dry-run
+
+   # Create staging environment
+   # ... deploy to staging
+   # ... run integration tests
+   ```
+
+2. **Production Deployment**
+   ```bash
+   # Migrate database
+   python3 scripts/migrate_to_rds.py
+
+   # Update environment
+   export DB_TYPE=postgres
+   export ENVIRONMENT=production
+
+   # Deploy AgentCore
+   agentcore launch
+
+   # Deploy web apps
+   # ... ECS/EC2 deployment
+   ```
+
+3. **Post-Deployment**
+   ```bash
+   # Verify backups
+   python3 scripts/backup_database.py
+
+   # Check monitoring
+   aws cloudwatch get-dashboard --dashboard-name LAUTECH
+
+   # Test critical flows
+   # ... smoke tests
+   ```
+
+### Monitoring Dashboard
+
+Access CloudWatch dashboard: `LAUTECH-Production`
+
+**Key Metrics:**
+- **Availability:** 99.9% uptime target
+- **Performance:** <500ms average response time
+- **Errors:** <1% error rate
+- **Database:** <80% CPU, <85% storage
+
+### Production Checklist
+
+- [ ] RDS Multi-AZ deployed and migrated
+- [ ] Automated backups configured
+- [ ] CloudWatch monitoring active
+- [ ] Security hardening complete
+- [ ] SSL certificates installed
+- [ ] WAF rules enabled
+- [ ] Auto-scaling configured
+- [ ] Disaster recovery tested
+- [ ] Documentation updated
+- [ ] Staff training completed
+- [ ] Support procedures documented
+- [ ] Load testing passed
+- [ ] Penetration testing completed
+
+### Support & Maintenance
+
+**Monitoring:** CloudWatch dashboards
+**Alerts:** SNS notifications to ops team
+**Logs:** CloudWatch Logs with 30-day retention
+**Updates:** Weekly during maintenance window (Sun 2-4 AM)
+**Backups:** Automated daily, verified weekly
+
+---
+
 ## 🚀 Next Steps
 
 ### Phase 1 (Completed ✅)
@@ -790,11 +1011,11 @@ def manage_courses():
 - ✅ Database backend
 - ✅ Data management system (CSV import)
 - ✅ Production web dashboard
+- ✅ Admin panel for staff
+- ✅ Production hardening guides and scripts
 
 ### Phase 2 (Current)
-- [ ] Admin dashboard (Part D)
-- [ ] Production hardening (Part E)
-- [ ] WhatsApp integration (Part B)
+- [ ] WhatsApp bot integration (Part B)
 
 ### Phase 3 (Future)
 - [ ] SMS notifications
