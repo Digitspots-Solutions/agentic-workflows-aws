@@ -1003,28 +1003,252 @@ Access CloudWatch dashboard: `LAUTECH-Production`
 
 ---
 
+## 💬 Part B: WhatsApp Bot Integration
+
+**Let students interact with LAUTECH Assistant via WhatsApp**
+
+### Quick Start
+
+📖 **Full Guide:** See [WHATSAPP_BOT.md](WHATSAPP_BOT.md) for complete setup
+
+#### 1. Setup Twilio
+
+```bash
+# Create account at https://www.twilio.com/try-twilio
+# Get credentials from console
+
+export TWILIO_ACCOUNT_SID='ACxxxxxxxxxx'
+export TWILIO_AUTH_TOKEN='xxxxxxxxxx'
+export TWILIO_WHATSAPP_NUMBER='whatsapp:+14155238886'
+```
+
+#### 2. Install & Test
+
+```bash
+# Install dependencies
+pip install -r requirements_whatsapp.txt
+
+# Test connection
+python3 whatsapp_bot.py test
+
+# Run bot server
+python3 whatsapp_bot.py
+```
+
+#### 3. Expose Webhook
+
+```bash
+# For testing: Use ngrok
+ngrok http 5000
+
+# For production: Deploy to EC2/ECS/Lambda
+# See WHATSAPP_BOT.md for deployment options
+```
+
+#### 4. Configure Twilio
+
+1. Go to: https://console.twilio.com/us1/develop/sms/settings/whatsapp-sandbox
+2. Set webhook URL: `https://your-server.com/webhook`
+3. Method: `POST`
+4. Save
+
+#### 5. Test on WhatsApp
+
+```
+1. Send to +1 415 523 8886 (Twilio sandbox)
+2. Message: "join <your-code>"
+3. Then ask: "When is registration?"
+```
+
+### Features
+
+✅ **Natural conversation** via WhatsApp
+✅ **Instant responses** from AgentCore agent
+✅ **Session management** for context
+✅ **Message chunking** for long responses
+✅ **Broadcast messages** for announcements
+✅ **Health monitoring** endpoints
+✅ **Rate limiting** to prevent abuse
+
+### Example Conversation
+
+```
+Student: When is registration?
+
+Bot: 📅 Registration for 2024/2025 First Semester:
+     • Start: September 1, 2024
+     • End: September 15, 2024
+     • Late registration: September 16-30 (with penalty)
+
+Student: How much is school fees for 200 level?
+
+Bot: 💰 200 Level Tuition Fee: ₦75,000
+     Session: 2024/2025
+
+     Payment methods:
+     • Bank transfer
+     • Online portal
+     • Campus bank branches
+
+Student: What CS courses are available?
+
+Bot: 📚 Computer Science Courses (200 Level):
+
+     • CSC201: Programming II (3 credits)
+       Prerequisites: CSC101
+
+     • MTH201: Linear Algebra (3 credits)
+       Prerequisites: MTH101
+
+     ... [more courses]
+```
+
+### Deployment Options
+
+#### Option 1: AWS Lambda (Serverless) ⭐ **Recommended**
+
+```bash
+# Package and deploy
+zip -r function.zip whatsapp_bot.py
+
+aws lambda create-function \
+  --function-name lautech-whatsapp-bot \
+  --runtime python3.11 \
+  --handler whatsapp_bot.lambda_handler \
+  --zip-file fileb://function.zip \
+  --environment Variables="{TWILIO_ACCOUNT_SID=xxx,LAUTECH_AGENT_ID=xxx}"
+
+# Create API Gateway endpoint
+# Configure in Twilio webhook
+```
+
+**Cost:** ~$5/month for 1000 messages/day
+
+#### Option 2: Docker Container
+
+```bash
+# Build and run
+docker build -t lautech-whatsapp-bot .
+docker run -d -p 5000:5000 \
+  -e TWILIO_ACCOUNT_SID='xxx' \
+  -e LAUTECH_AGENT_ID='xxx' \
+  lautech-whatsapp-bot
+```
+
+#### Option 3: EC2 with systemd
+
+```bash
+# Copy files and create systemd service
+sudo systemctl start lautech-whatsapp
+sudo systemctl enable lautech-whatsapp
+
+# Configure nginx reverse proxy for HTTPS
+```
+
+### Broadcast Messages
+
+Send announcements to all users:
+
+```bash
+# Via CLI
+python3 whatsapp_bot.py broadcast "Registration deadline extended!"
+
+# Via Python
+from whatsapp_bot import send_broadcast
+send_broadcast("Important announcement", phone_numbers)
+```
+
+### Monitoring
+
+```bash
+# Health check
+curl http://your-server/health
+
+# Statistics
+curl http://your-server/stats
+```
+
+Response:
+```json
+{
+  "total_users": 247,
+  "total_messages": 1523,
+  "active_sessions": 15
+}
+```
+
+### Cost Estimation
+
+| Component | Cost |
+|-----------|------|
+| Twilio WhatsApp Business | $15/month |
+| Messages (1000/day) | $150/month |
+| AWS Lambda | $5/month |
+| **Total** | **~$170/month** |
+
+💡 **Sandbox is free** for testing!
+
+### Production Checklist
+
+- [ ] Twilio Business number approved
+- [ ] Webhook deployed with HTTPS
+- [ ] SSL certificate installed
+- [ ] Rate limiting enabled
+- [ ] Request validation implemented
+- [ ] Monitoring active
+- [ ] User guide published
+- [ ] Support team trained
+- [ ] Load tested
+
+### Student Guide
+
+**How students use it:**
+
+1. **Join**
+   - Save: +1 415 523 8886
+   - Send: `join lautech-code`
+
+2. **Ask questions**
+   - When is registration?
+   - What courses are available?
+   - How much is fees?
+
+3. **Get help**
+   - Send: `help` or `menu`
+
+---
+
 ## 🚀 Next Steps
 
 ### Phase 1 (Completed ✅)
-- ✅ Multi-agent system
-- ✅ AgentCore integration
-- ✅ Database backend
-- ✅ Data management system (CSV import)
-- ✅ Production web dashboard
-- ✅ Admin panel for staff
-- ✅ Production hardening guides and scripts
+- ✅ Multi-agent system with 4 specialist agents
+- ✅ AgentCore integration (deployed to AWS)
+- ✅ Database backend (SQLite → RDS ready)
+- ✅ Data management system (CSV import/export)
+- ✅ Production web dashboard (Streamlit)
+- ✅ Admin panel for staff (full CRUD)
+- ✅ Production hardening (monitoring, backups, security)
+- ✅ WhatsApp bot integration (Twilio)
 
-### Phase 2 (Current)
-- [ ] WhatsApp bot integration (Part B)
-
-### Phase 3 (Future)
-- [ ] SMS notifications
-- [ ] Email alerts
-- [ ] Voice interface
-- [ ] Multi-language support
-- [ ] Mobile app
+### Phase 2 (Future Enhancements)
+- [ ] SMS notifications (Twilio SMS)
+- [ ] Email alerts (SES)
+- [ ] Telegram bot
+- [ ] Voice interface (Alexa/Google Assistant)
+- [ ] Multi-language support (Yoruba, Igbo, Hausa)
+- [ ] Mobile app (React Native)
 - [ ] Analytics dashboard
 - [ ] Student portal integration
+- [ ] Payment integration
+- [ ] Document upload/verification
+
+### Phase 3 (Advanced Features)
+- [ ] AI-powered course recommendations
+- [ ] Automated transcript generation
+- [ ] Grade prediction
+- [ ] Study group matching
+- [ ] Career counseling
+- [ ] Alumni network integration
 
 ---
 
