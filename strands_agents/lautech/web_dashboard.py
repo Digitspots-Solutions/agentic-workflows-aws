@@ -428,11 +428,19 @@ def invoke_agent(prompt: str, session_id: str = None):
         if result.returncode != 0:
             return f"⚠️ Agent invocation failed:\n{result.stderr}"
 
-        # Parse response
-        try:
-            response_data = json.loads(result.stdout)
+        # Parse response - agentcore CLI outputs metadata box + "Response: ..." format
+        output = result.stdout.strip()
 
-            # Extract the actual response text
+        # Look for "Response:" line and extract everything after it
+        if "Response:" in output:
+            # Split on "Response:" and take everything after
+            response_part = output.split("Response:", 1)[1].strip()
+            return response_part
+
+        # Fallback: try parsing as JSON
+        try:
+            response_data = json.loads(output)
+
             if isinstance(response_data, dict):
                 if 'output' in response_data:
                     return response_data['output']
@@ -446,8 +454,11 @@ def invoke_agent(prompt: str, session_id: str = None):
                 return str(response_data)
 
         except json.JSONDecodeError:
-            # If not JSON, return raw output
-            return result.stdout.strip()
+            # Last resort: return cleaned output (remove box characters)
+            cleaned = output
+            for char in ['╭', '╮', '╰', '╯', '│', '─']:
+                cleaned = cleaned.replace(char, '')
+            return cleaned.strip()
 
     except subprocess.TimeoutExpired:
         return "⚠️ Request timeout. The agent took too long to respond."
