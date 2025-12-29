@@ -467,12 +467,12 @@ def invoke_agent(prompt: str, session_id: str = None):
         if session_id:
             cmd.extend(['--session-id', session_id])
 
-        # Execute command
+        # Execute command with longer timeout for complex queries
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=90  # Increased to 90 seconds for longer responses
         )
 
         if result.returncode != 0:
@@ -536,27 +536,6 @@ if 'is_typing' not in st.session_state:
 if 'pending_query' not in st.session_state:
     st.session_state.pending_query = None
 
-# Handle pending agent invocation
-if st.session_state.is_typing and st.session_state.pending_query:
-    # Get response from agent
-    response = invoke_agent(st.session_state.pending_query, st.session_state.session_id)
-
-    # Add response to messages
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": response
-    })
-
-    # Update counters
-    st.session_state.query_count += 1
-
-    # Reset typing state
-    st.session_state.is_typing = False
-    st.session_state.pending_query = None
-
-    # Rerun to show response
-    st.rerun()
-
 # ============================================================================
 # HEADER
 # ============================================================================
@@ -577,25 +556,25 @@ quick_actions = [
         "icon": "📚",
         "title": "Courses",
         "desc": "Browse available courses and prerequisites",
-        "query": "What Computer Science courses are available?"
+        "query": "What courses are available? Please show me courses from different departments."
     },
     {
         "icon": "💰",
         "title": "Fees",
         "desc": "Check school fees and payment info",
-        "query": "How much is school fees for 200 level?"
+        "query": "Tell me about school fees. How much do students pay?"
     },
     {
         "icon": "📅",
         "title": "Calendar",
         "desc": "View registration dates and deadlines",
-        "query": "When is registration for this semester?"
+        "query": "What are the important dates this semester? When is registration?"
     },
     {
         "icon": "🏠",
         "title": "Hostels",
         "desc": "Explore accommodation options",
-        "query": "What hostels are available and how do I apply?"
+        "query": "Tell me about hostels. What accommodation is available and how do I apply?"
     }
 ]
 
@@ -708,3 +687,28 @@ st.markdown("""
     <p>Powered by AWS Bedrock AgentCore • LAUTECH © 2024</p>
 </div>
 """, unsafe_allow_html=True)
+
+# ============================================================================
+# AGENT INVOCATION - RUNS AT END AFTER UI IS RENDERED
+# ============================================================================
+
+# This runs AFTER all UI is rendered, so typing indicator is visible
+if st.session_state.is_typing and st.session_state.pending_query:
+    # Get response from agent (this will block, but typing indicator is already shown)
+    response = invoke_agent(st.session_state.pending_query, st.session_state.session_id)
+
+    # Add response to messages
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": response
+    })
+
+    # Update counters
+    st.session_state.query_count += 1
+
+    # Reset typing state
+    st.session_state.is_typing = False
+    st.session_state.pending_query = None
+
+    # Rerun to show response
+    st.rerun()
