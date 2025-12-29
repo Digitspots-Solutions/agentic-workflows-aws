@@ -337,6 +337,45 @@ st.markdown("""
         margin-top: 0.5rem;
     }
 
+    /* Typing Indicator */
+    .typing-indicator {
+        display: flex;
+        gap: 1rem;
+        margin: 1.5rem 0;
+        animation: messageSlide 0.4s ease-out;
+    }
+
+    .typing-indicator .message-avatar {
+        background: linear-gradient(135deg, var(--forest), var(--sage));
+    }
+
+    .typing-dots {
+        background: white;
+        padding: 1.25rem 1.5rem;
+        border-radius: 16px;
+        border: 1px solid rgba(30, 70, 32, 0.1);
+        border-bottom-left-radius: 4px;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .typing-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--sage);
+        animation: typingBounce 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
     /* Animations */
     @keyframes slideDown {
         from {
@@ -374,6 +413,17 @@ st.markdown("""
     @keyframes float {
         0%, 100% { transform: translate(0, 0) rotate(0deg); }
         50% { transform: translate(20px, 20px) rotate(5deg); }
+    }
+
+    @keyframes typingBounce {
+        0%, 60%, 100% {
+            transform: translateY(0);
+            opacity: 0.7;
+        }
+        30% {
+            transform: translateY(-10px);
+            opacity: 1;
+        }
     }
 
     /* Responsive */
@@ -480,6 +530,33 @@ if 'messages' not in st.session_state:
 if 'query_count' not in st.session_state:
     st.session_state.query_count = 0
 
+if 'is_typing' not in st.session_state:
+    st.session_state.is_typing = False
+
+if 'pending_query' not in st.session_state:
+    st.session_state.pending_query = None
+
+# Handle pending agent invocation
+if st.session_state.is_typing and st.session_state.pending_query:
+    # Get response from agent
+    response = invoke_agent(st.session_state.pending_query, st.session_state.session_id)
+
+    # Add response to messages
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": response
+    })
+
+    # Update counters
+    st.session_state.query_count += 1
+
+    # Reset typing state
+    st.session_state.is_typing = False
+    st.session_state.pending_query = None
+
+    # Rerun to show response
+    st.rerun()
+
 # ============================================================================
 # HEADER
 # ============================================================================
@@ -530,19 +607,15 @@ for col, action in zip(cols, quick_actions):
             key=f"action_{action['title']}",
             use_container_width=True
         ):
+            # Add user message
             st.session_state.messages.append({
                 "role": "user",
                 "content": action['query']
             })
 
-            response = invoke_agent(action['query'], st.session_state.session_id)
-
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": response
-            })
-
-            st.session_state.query_count += 1
+            # Set pending query and trigger typing indicator
+            st.session_state.pending_query = action['query']
+            st.session_state.is_typing = True
             st.rerun()
 
 # ============================================================================
@@ -563,6 +636,19 @@ for msg in st.session_state.messages:
     </div>
     """, unsafe_allow_html=True)
 
+# Show typing indicator if agent is processing
+if st.session_state.is_typing:
+    st.markdown("""
+    <div class="typing-indicator">
+        <div class="message-avatar">🎓</div>
+        <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Input
@@ -578,19 +664,15 @@ col1, col2, col3 = st.columns([2, 1, 1])
 with col1:
     if st.button("Send", type="primary", use_container_width=True):
         if user_input:
+            # Add user message
             st.session_state.messages.append({
                 "role": "user",
                 "content": user_input
             })
 
-            response = invoke_agent(user_input, st.session_state.session_id)
-
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": response
-            })
-
-            st.session_state.query_count += 1
+            # Set pending query and trigger typing indicator
+            st.session_state.pending_query = user_input
+            st.session_state.is_typing = True
             st.rerun()
 
 with col2:
