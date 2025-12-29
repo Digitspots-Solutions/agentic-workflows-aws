@@ -6,9 +6,9 @@ Calls the deployed AgentCore agent via boto3.
 """
 
 import streamlit as st
-import boto3
 import json
 import os
+import subprocess
 from datetime import datetime
 import uuid
 
@@ -264,18 +264,25 @@ st.markdown("""
 
     /* Input */
     .stTextInput input {
-        background: white;
-        border: 2px solid var(--sage);
-        border-radius: 16px;
-        padding: 1rem 1.5rem;
-        font-size: 1rem;
-        font-family: 'DM Sans', sans-serif;
-        transition: all 0.3s ease;
+        background: white !important;
+        border: 2px solid var(--sage) !important;
+        border-radius: 16px !important;
+        padding: 1rem 1.5rem !important;
+        font-size: 1rem !important;
+        font-family: 'DM Sans', sans-serif !important;
+        color: var(--earth-dark) !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .stTextInput input::placeholder {
+        color: var(--earth-medium) !important;
+        opacity: 0.6 !important;
     }
 
     .stTextInput input:focus {
-        border-color: var(--terracotta);
-        box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.1);
+        border-color: var(--terracotta) !important;
+        box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.1) !important;
+        color: var(--earth-dark) !important;
     }
 
     /* Buttons */
@@ -396,32 +403,58 @@ st.markdown("""
 # ============================================================================
 
 AGENT_ID = os.getenv('LAUTECH_AGENT_ID', 'lautech_agentcore-U7qNy1GPsE')
-AWS_REGION = os.getenv('AWS_DEFAULT_REGION', 'us-east-1')
 
 def invoke_agent(prompt: str, session_id: str = None):
-    """Invoke the deployed AgentCore agent"""
+    """Invoke the deployed AgentCore agent via CLI"""
     try:
-        client = boto3.client('bedrock-agentcore', region_name=AWS_REGION)
+        # Build the payload
+        payload = json.dumps({"prompt": prompt})
 
-        params = {
-            'agentId': AGENT_ID,
-            'payload': {'prompt': prompt}
-        }
+        # Call agentcore CLI
+        cmd = ['agentcore', 'invoke', payload]
 
+        # Add session ID if provided
         if session_id:
-            params['sessionId'] = session_id
+            cmd.extend(['--session-id', session_id])
 
-        response = client.invoke_agent(**params)
+        # Execute command
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
 
-        if 'output' in response:
-            return response['output']
-        elif 'message' in response:
-            return response['message']
-        else:
-            return str(response)
+        if result.returncode != 0:
+            return f"⚠️ Agent invocation failed:\n{result.stderr}"
 
+        # Parse response
+        try:
+            response_data = json.loads(result.stdout)
+
+            # Extract the actual response text
+            if isinstance(response_data, dict):
+                if 'output' in response_data:
+                    return response_data['output']
+                elif 'response' in response_data:
+                    return response_data['response']
+                elif 'message' in response_data:
+                    return response_data['message']
+                else:
+                    return str(response_data)
+            else:
+                return str(response_data)
+
+        except json.JSONDecodeError:
+            # If not JSON, return raw output
+            return result.stdout.strip()
+
+    except subprocess.TimeoutExpired:
+        return "⚠️ Request timeout. The agent took too long to respond."
+    except FileNotFoundError:
+        return "⚠️ Error: 'agentcore' command not found.\n\nPlease ensure AgentCore CLI is installed and in your PATH."
     except Exception as e:
-        return f"⚠️ Error: {str(e)}\n\nPlease check your AWS credentials and agent deployment."
+        return f"⚠️ Error: {str(e)}\n\nPlease check your AgentCore setup."
 
 # ============================================================================
 # SESSION STATE
