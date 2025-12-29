@@ -25,25 +25,17 @@ fi
 echo "✅ Python $PYTHON_VERSION detected"
 echo ""
 
-# Check if streamlit is installed
+# Check if dependencies are installed
 if ! python3 -c "import streamlit" 2>/dev/null; then
     echo "📦 Installing Streamlit..."
     pip3 install streamlit boto3
     echo ""
 fi
 
-# Check AWS credentials
-if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
-    echo "⚠️  WARNING: AWS credentials not set"
-    echo ""
-    echo "The dashboard needs AWS credentials to call the AgentCore agent."
-    echo "Please set them:"
-    echo ""
-    echo "   export AWS_ACCESS_KEY_ID=\"your-key\""
-    echo "   export AWS_SECRET_ACCESS_KEY=\"your-secret\""
-    echo "   export AWS_DEFAULT_REGION=\"us-east-1\""
-    echo ""
-    echo "Or configure using: aws configure"
+# Quick AWS credential check (optional - boto3 will handle credential discovery)
+if ! aws sts get-caller-identity &>/dev/null; then
+    echo "⚠️  WARNING: AWS credentials not configured"
+    echo "   Run: aws configure"
     echo ""
     read -p "Continue anyway? (y/n) " -n 1 -r
     echo ""
