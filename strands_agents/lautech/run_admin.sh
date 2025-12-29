@@ -8,8 +8,8 @@ echo "LAUTECH Admin Panel"
 echo "=========================================="
 echo ""
 
-# Check Python version
-PYTHON_VERSION=$(python3 --version 2>&1 | grep -oP '(?<=Python )\d+\.\d+')
+# Check Python version (macOS compatible)
+PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}' | cut -d. -f1,2)
 REQUIRED_VERSION="3.10"
 
 if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$PYTHON_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then
