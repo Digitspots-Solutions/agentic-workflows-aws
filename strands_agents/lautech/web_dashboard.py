@@ -536,19 +536,10 @@ st.markdown(f"""
 # CHAT INTERFACE
 # ============================================================================
 
-st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+# Only show chat container when there are messages or typing
+if len(st.session_state.messages) > 0 or st.session_state.is_typing:
+    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 
-# Show empty state or messages
-if len(st.session_state.messages) == 0 and not st.session_state.is_typing:
-    st.markdown("""
-    <div class="empty-state">
-        <div class="empty-state-icon">💬</div>
-        <div class="empty-state-text">
-            Start a conversation by using the quick actions above or type your question below.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-else:
     # Display all messages
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"], avatar="👤" if msg["role"] == "user" else "🎓"):
@@ -564,7 +555,7 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================================
 # CHAT INPUT
