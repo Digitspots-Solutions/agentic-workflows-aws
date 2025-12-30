@@ -168,6 +168,13 @@ st.markdown("""
         border-left: 3px solid var(--text-tertiary);
     }
 
+    /* Force visible text in chat messages */
+    .stChatMessage p,
+    .stChatMessage div,
+    .stChatMessage span {
+        color: var(--text-primary) !important;
+    }
+
     /* Chat Input */
     .stChatInputContainer {
         border-top: 1px solid var(--border-light);
