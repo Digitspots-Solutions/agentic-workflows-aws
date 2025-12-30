@@ -146,7 +146,6 @@ st.markdown("""
         border-radius: 12px;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
-        min-height: 400px;
         max-height: 600px;
         overflow-y: auto;
         box-shadow: var(--shadow-sm);
@@ -279,18 +278,18 @@ st.markdown("""
     /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 3rem 1.5rem;
+        padding: 2rem 1.5rem;
         color: var(--text-tertiary);
     }
 
     .empty-state-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
         opacity: 0.5;
     }
 
     .empty-state-text {
-        font-size: 1rem;
+        font-size: 0.9375rem;
         color: var(--text-secondary);
     }
 
