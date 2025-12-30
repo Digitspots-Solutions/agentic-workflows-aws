@@ -1,8 +1,8 @@
 """
 LAUTECH Student Assistant - Web Dashboard
 
-A beautiful, Nigerian-inspired interface for the LAUTECH AI assistant.
-Calls the deployed AgentCore agent via boto3.
+A clean, professional interface for the LAUTECH AI assistant.
+Calls the deployed AgentCore agent via CLI.
 """
 
 import streamlit as st
@@ -24,348 +24,294 @@ st.set_page_config(
 )
 
 # ============================================================================
-# CUSTOM CSS - NIGERIAN-INSPIRED DESIGN
+# CUSTOM CSS - CLEAN, PROFESSIONAL DESIGN
 # ============================================================================
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+    /* Color Palette */
     :root {
-        --earth-dark: #2C1810;
-        --earth-medium: #5C3D2E;
-        --terracotta: #D35400;
-        --ochre: #E67E22;
-        --forest: #1E4620;
-        --sage: #52796F;
-        --coral: #FF6B6B;
-        --cream: #FFF8E7;
-        --sand: #F4E8D0;
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8f9fa;
+        --bg-tertiary: #f1f3f5;
+
+        --text-primary: #1a1a1a;
+        --text-secondary: #6b7280;
+        --text-tertiary: #9ca3af;
+
+        --border-light: #e5e7eb;
+        --border-medium: #d1d5db;
+
+        --accent-primary: #4f46e5;
+        --accent-hover: #4338ca;
+        --accent-light: #eef2ff;
+
+        --success: #10b981;
+        --error: #ef4444;
+
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
     }
 
-    /* Reset Streamlit defaults */
-    .stApp {
-        background: linear-gradient(135deg,
-            var(--cream) 0%,
-            var(--sand) 50%,
-            #FFE5CC 100%
-        );
-        background-attachment: fixed;
-    }
-
-    /* African geometric pattern overlay */
-    .stApp::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image:
-            repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(92, 61, 46, 0.02) 35px, rgba(92, 61, 46, 0.02) 70px),
-            repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(30, 70, 32, 0.02) 35px, rgba(30, 70, 32, 0.02) 70px);
-        pointer-events: none;
-        z-index: 0;
-    }
-
-    /* Main content */
-    .block-container {
-        max-width: 1200px;
-        padding: 3rem 2rem 6rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    /* Hide Streamlit branding */
-    #MainMenu, footer, header {visibility: hidden;}
-
-    /* Typography */
+    /* Reset and Base Styles */
     * {
-        font-family: 'DM Sans', sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
-    h1, h2, h3 {
-        font-family: 'Crimson Pro', serif;
-        color: var(--earth-dark);
+    .stApp {
+        background: var(--bg-secondary);
+    }
+
+    .block-container {
+        max-width: 1100px;
+        padding: 2rem 1.5rem 3rem;
+    }
+
+    /* Hide Streamlit Branding */
+    #MainMenu, footer, header {
+        visibility: hidden;
+    }
+
+    /* Header */
+    .header {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .header h1 {
+        font-size: 1.875rem;
         font-weight: 700;
-        letter-spacing: -0.02em;
+        color: var(--text-primary);
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -0.025em;
     }
 
-    /* Hero Header */
-    .hero-header {
-        text-align: center;
-        padding: 3rem 2rem;
-        background: linear-gradient(135deg, var(--forest) 0%, var(--sage) 100%);
-        border-radius: 24px;
-        box-shadow:
-            0 20px 60px rgba(30, 70, 32, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        margin-bottom: 3rem;
-        position: relative;
-        overflow: hidden;
-        animation: slideDown 0.8s ease-out;
-    }
-
-    .hero-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -20%;
-        width: 400px;
-        height: 400px;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-        animation: float 6s ease-in-out infinite;
-    }
-
-    .hero-title {
-        font-size: 3.5rem;
-        font-weight: 700;
-        color: var(--cream);
+    .header p {
+        font-size: 1rem;
+        color: var(--text-secondary);
         margin: 0;
-        text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
-        animation: fadeIn 1s ease-out 0.2s both;
-    }
-
-    .hero-subtitle {
-        font-size: 1.25rem;
-        color: var(--sand);
-        margin-top: 1rem;
-        font-weight: 400;
-        animation: fadeIn 1s ease-out 0.4s both;
     }
 
     /* Quick Actions */
     .quick-actions {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-        margin: 2rem 0 3rem;
-        animation: fadeIn 1s ease-out 0.6s both;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
     }
 
-    .action-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 16px;
-        border: 2px solid transparent;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        position: relative;
-        overflow: hidden;
+    .stButton > button {
+        width: 100%;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        padding: 1rem;
+        color: var(--text-primary);
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-sm);
+        height: auto;
+        white-space: normal;
+        text-align: left;
     }
 
-    .action-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--terracotta), var(--coral));
-        transform: scaleX(0);
-        transition: transform 0.3s ease;
+    .stButton > button:hover {
+        border-color: var(--accent-primary);
+        background: var(--accent-light);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
     }
 
-    .action-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(211, 84, 0, 0.15);
-        border-color: var(--terracotta);
+    .stButton > button:active {
+        transform: translateY(0);
     }
 
-    .action-card:hover::before {
-        transform: scaleX(1);
-    }
-
-    .action-icon {
-        font-size: 2rem;
-        margin-bottom: 0.75rem;
-    }
-
-    .action-title {
-        font-family: 'Crimson Pro', serif;
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--earth-dark);
-        margin-bottom: 0.5rem;
-    }
-
-    .action-desc {
-        font-size: 0.9rem;
-        color: var(--earth-medium);
+    .stButton > button p {
+        margin: 0;
         line-height: 1.5;
     }
 
-    /* Chat Interface */
+    /* Chat Container */
     .chat-container {
-        background: white;
-        border-radius: 20px;
-        padding: 2rem;
-        box-shadow:
-            0 10px 40px rgba(0, 0, 0, 0.08),
-            inset 0 1px 0 rgba(255, 255, 255, 0.5);
-        margin: 2rem 0;
-        animation: fadeIn 1s ease-out 0.8s both;
-    }
-
-    /* Messages */
-    .message {
-        margin: 1.5rem 0;
-        display: flex;
-        gap: 1rem;
-        animation: messageSlide 0.4s ease-out;
-    }
-
-    .message.user {
-        flex-direction: row-reverse;
-    }
-
-    .message-avatar {
-        width: 40px;
-        height: 40px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
         border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.25rem;
-        flex-shrink: 0;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        min-height: 400px;
+        max-height: 600px;
+        overflow-y: auto;
+        box-shadow: var(--shadow-sm);
     }
 
-    .message.user .message-avatar {
-        background: linear-gradient(135deg, var(--terracotta), var(--coral));
+    /* Chat Messages using Streamlit Native */
+    .stChatMessage {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
     }
 
-    .message.assistant .message-avatar {
-        background: linear-gradient(135deg, var(--forest), var(--sage));
+    .stChatMessage[data-testid="user-message"] {
+        background: var(--accent-light);
+        border-left: 3px solid var(--accent-primary);
     }
 
-    .message-content {
-        background: var(--cream);
-        padding: 1.25rem 1.5rem;
-        border-radius: 16px;
-        max-width: 70%;
-        font-size: 1rem;
-        line-height: 1.7;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    .stChatMessage[data-testid="assistant-message"] {
+        background: var(--bg-secondary);
+        border-left: 3px solid var(--text-tertiary);
     }
 
-    .message.user .message-content {
-        background: linear-gradient(135deg, var(--terracotta), var(--ochre));
-        color: white;
-        border-bottom-right-radius: 4px;
+    /* Chat Input */
+    .stChatInputContainer {
+        border-top: 1px solid var(--border-light);
+        padding-top: 1rem;
+        background: var(--bg-primary);
     }
 
-    .message.assistant .message-content {
-        background: white;
-        color: var(--earth-dark);
-        border: 1px solid rgba(30, 70, 32, 0.1);
-        border-bottom-left-radius: 4px;
+    .stChatInput > div {
+        border: 2px solid var(--border-medium);
+        border-radius: 8px;
+        transition: all 0.2s ease;
     }
 
-    /* Input */
+    .stChatInput > div:focus-within {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    /* Text Input (fallback) */
     .stTextInput input {
-        background: white !important;
-        border: 2px solid var(--sage) !important;
-        border-radius: 16px !important;
-        padding: 1rem 1.5rem !important;
-        font-size: 1rem !important;
-        font-family: 'DM Sans', sans-serif !important;
-        color: var(--earth-dark) !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .stTextInput input::placeholder {
-        color: var(--earth-medium) !important;
-        opacity: 0.6 !important;
+        border: 2px solid var(--border-medium);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        background: var(--bg-primary);
+        color: var(--text-primary);
     }
 
     .stTextInput input:focus {
-        border-color: var(--terracotta) !important;
-        box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.1) !important;
-        color: var(--earth-dark) !important;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px var(--accent-light);
+        outline: none;
     }
 
-    /* Buttons */
-    .stButton button {
-        background: linear-gradient(135deg, var(--terracotta), var(--ochre));
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 0.875rem 2rem;
-        font-weight: 600;
-        font-size: 1rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 12px rgba(211, 84, 0, 0.3);
-        font-family: 'DM Sans', sans-serif;
+    .stTextInput input::placeholder {
+        color: var(--text-tertiary);
     }
 
-    .stButton button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(211, 84, 0, 0.4);
+    /* Primary Button */
+    button[kind="primary"] {
+        background: var(--accent-primary) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.625rem 1.5rem !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
+        box-shadow: var(--shadow-sm) !important;
     }
 
-    /* Stats Bar */
-    .stats-bar {
+    button[kind="primary"]:hover {
+        background: var(--accent-hover) !important;
+        box-shadow: var(--shadow-md) !important;
+        transform: translateY(-1px);
+    }
+
+    button[kind="primary"]:active {
+        transform: translateY(0);
+    }
+
+    /* Secondary Button */
+    button[kind="secondary"] {
+        background: var(--bg-primary) !important;
+        color: var(--text-secondary) !important;
+        border: 1px solid var(--border-medium) !important;
+        border-radius: 8px !important;
+        padding: 0.625rem 1.5rem !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+    }
+
+    button[kind="secondary"]:hover {
+        border-color: var(--border-medium) !important;
+        background: var(--bg-tertiary) !important;
+    }
+
+    /* Stats */
+    .stats-container {
         display: flex;
-        justify-content: center;
-        gap: 3rem;
-        padding: 2rem;
-        background: white;
-        border-radius: 16px;
-        margin: 2rem 0;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        animation: fadeIn 1s ease-out 1s both;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
     }
 
-    .stat {
-        text-align: center;
+    .stat-card {
+        flex: 1;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        padding: 1.25rem;
+        box-shadow: var(--shadow-sm);
     }
 
     .stat-value {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 2rem;
-        font-weight: 600;
-        color: var(--terracotta);
-        display: block;
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+        margin-bottom: 0.5rem;
     }
 
     .stat-label {
         font-size: 0.875rem;
-        color: var(--earth-medium);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-top: 0.5rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1.5rem;
+        color: var(--text-tertiary);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-state-text {
+        font-size: 1rem;
+        color: var(--text-secondary);
     }
 
     /* Typing Indicator */
     .typing-indicator {
         display: flex;
-        gap: 1rem;
-        margin: 1.5rem 0;
-        animation: messageSlide 0.4s ease-out;
-    }
-
-    .typing-indicator .message-avatar {
-        background: linear-gradient(135deg, var(--forest), var(--sage));
-    }
-
-    .typing-dots {
-        background: white;
-        padding: 1.25rem 1.5rem;
-        border-radius: 16px;
-        border: 1px solid rgba(30, 70, 32, 0.1);
-        border-bottom-left-radius: 4px;
-        display: flex;
-        gap: 0.5rem;
         align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-left: 3px solid var(--text-tertiary);
+        border-radius: 8px;
+        margin-bottom: 1rem;
     }
 
     .typing-dot {
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
-        background: var(--sage);
-        animation: typingBounce 1.4s infinite;
+        background: var(--text-tertiary);
+        animation: typing 1.4s infinite;
     }
 
     .typing-dot:nth-child(2) {
@@ -376,73 +322,61 @@ st.markdown("""
         animation-delay: 0.4s;
     }
 
-    /* Animations */
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes messageSlide {
-        from {
-            opacity: 0;
-            transform: translateX(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    @keyframes float {
-        0%, 100% { transform: translate(0, 0) rotate(0deg); }
-        50% { transform: translate(20px, 20px) rotate(5deg); }
-    }
-
-    @keyframes typingBounce {
+    @keyframes typing {
         0%, 60%, 100% {
-            transform: translateY(0);
-            opacity: 0.7;
+            opacity: 0.3;
+            transform: scale(0.8);
         }
         30% {
-            transform: translateY(-10px);
             opacity: 1;
+            transform: scale(1);
         }
+    }
+
+    /* Footer */
+    .footer {
+        text-align: center;
+        padding: 1.5rem;
+        color: var(--text-tertiary);
+        font-size: 0.875rem;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--border-medium);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-tertiary);
     }
 
     /* Responsive */
     @media (max-width: 768px) {
-        .hero-title {
-            font-size: 2.5rem;
+        .block-container {
+            padding: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
         }
 
         .quick-actions {
             grid-template-columns: 1fr;
         }
 
-        .message-content {
-            max-width: 85%;
-        }
-
-        .stats-bar {
+        .stats-container {
             flex-direction: column;
-            gap: 1.5rem;
         }
     }
 </style>
@@ -457,65 +391,46 @@ AGENT_ID = os.getenv('LAUTECH_AGENT_ID', 'lautech_agentcore-U7qNy1GPsE')
 def invoke_agent(prompt: str, session_id: str = None):
     """Invoke the deployed AgentCore agent via CLI"""
     try:
-        # Build the payload
         payload = json.dumps({"prompt": prompt})
-
-        # Call agentcore CLI
         cmd = ['agentcore', 'invoke', payload]
 
-        # Add session ID if provided
         if session_id:
             cmd.extend(['--session-id', session_id])
 
-        # Execute command with longer timeout for complex queries
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            timeout=90  # Increased to 90 seconds for longer responses
+            timeout=90
         )
 
         if result.returncode != 0:
-            return f"⚠️ Agent invocation failed:\n{result.stderr}"
+            return f"⚠️ Agent error: {result.stderr}"
 
-        # Parse response - agentcore CLI outputs metadata box + "Response: ..." format
         output = result.stdout.strip()
 
-        # Look for "Response:" line and extract everything after it
+        # Extract response after "Response:" line
         if "Response:" in output:
-            # Split on "Response:" and take everything after
-            response_part = output.split("Response:", 1)[1].strip()
-            return response_part
+            return output.split("Response:", 1)[1].strip()
 
-        # Fallback: try parsing as JSON
+        # Fallback: try JSON parsing
         try:
-            response_data = json.loads(output)
-
-            if isinstance(response_data, dict):
-                if 'output' in response_data:
-                    return response_data['output']
-                elif 'response' in response_data:
-                    return response_data['response']
-                elif 'message' in response_data:
-                    return response_data['message']
-                else:
-                    return str(response_data)
-            else:
-                return str(response_data)
-
+            data = json.loads(output)
+            if isinstance(data, dict):
+                return data.get('output') or data.get('response') or data.get('message') or str(data)
+            return str(data)
         except json.JSONDecodeError:
-            # Last resort: return cleaned output (remove box characters)
-            cleaned = output
+            # Remove box characters
             for char in ['╭', '╮', '╰', '╯', '│', '─']:
-                cleaned = cleaned.replace(char, '')
-            return cleaned.strip()
+                output = output.replace(char, '')
+            return output.strip()
 
     except subprocess.TimeoutExpired:
-        return "⚠️ Request timeout. The agent took too long to respond."
+        return "⚠️ Request timeout - please try again with a simpler query."
     except FileNotFoundError:
-        return "⚠️ Error: 'agentcore' command not found.\n\nPlease ensure AgentCore CLI is installed and in your PATH."
+        return "⚠️ AgentCore CLI not found. Please ensure it's installed and in your PATH."
     except Exception as e:
-        return f"⚠️ Error: {str(e)}\n\nPlease check your AgentCore setup."
+        return f"⚠️ Error: {str(e)}"
 
 # ============================================================================
 # SESSION STATE
@@ -541,9 +456,9 @@ if 'pending_query' not in st.session_state:
 # ============================================================================
 
 st.markdown("""
-<div class="hero-header">
-    <h1 class="hero-title">LAUTECH Assistant</h1>
-    <p class="hero-subtitle">Your AI-powered guide to Ladoke Akintola University of Technology</p>
+<div class="header">
+    <h1>🎓 LAUTECH Assistant</h1>
+    <p>Your AI-powered guide to Ladoke Akintola University of Technology</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -551,51 +466,65 @@ st.markdown("""
 # QUICK ACTIONS
 # ============================================================================
 
+st.markdown('<div class="quick-actions">', unsafe_allow_html=True)
+
 quick_actions = [
     {
         "icon": "📚",
-        "title": "Courses",
-        "desc": "Browse available courses and prerequisites",
+        "title": "Browse Courses",
         "query": "What courses are available? Please show me courses from different departments."
     },
     {
         "icon": "💰",
-        "title": "Fees",
-        "desc": "Check school fees and payment info",
-        "query": "Tell me about school fees. How much do students pay?"
+        "title": "School Fees",
+        "query": "Tell me about school fees and payment information."
     },
     {
         "icon": "📅",
-        "title": "Calendar",
-        "desc": "View registration dates and deadlines",
-        "query": "What are the important dates this semester? When is registration?"
+        "title": "Academic Calendar",
+        "query": "What are the important dates this semester?"
     },
     {
         "icon": "🏠",
-        "title": "Hostels",
-        "desc": "Explore accommodation options",
-        "query": "Tell me about hostels. What accommodation is available and how do I apply?"
+        "title": "Accommodation",
+        "query": "Tell me about hostels and accommodation options."
     }
 ]
 
 cols = st.columns(len(quick_actions))
 for col, action in zip(cols, quick_actions):
     with col:
-        if st.button(
-            f"{action['icon']}\n\n**{action['title']}**\n\n{action['desc']}",
-            key=f"action_{action['title']}",
-            use_container_width=True
-        ):
-            # Add user message
+        if st.button(f"{action['icon']} {action['title']}", key=f"qa_{action['title']}"):
             st.session_state.messages.append({
                 "role": "user",
                 "content": action['query']
             })
-
-            # Set pending query and trigger typing indicator
             st.session_state.pending_query = action['query']
             st.session_state.is_typing = True
             st.rerun()
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# ============================================================================
+# STATS
+# ============================================================================
+
+st.markdown(f"""
+<div class="stats-container">
+    <div class="stat-card">
+        <div class="stat-value">{st.session_state.query_count}</div>
+        <div class="stat-label">Queries Answered</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{len(st.session_state.messages) // 2}</div>
+        <div class="stat-label">Conversations</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">24/7</div>
+        <div class="stat-label">Available</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ============================================================================
 # CHAT INTERFACE
@@ -603,88 +532,72 @@ for col, action in zip(cols, quick_actions):
 
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 
-# Display messages
-for msg in st.session_state.messages:
-    avatar = "👤" if msg["role"] == "user" else "🎓"
-    msg_class = "user" if msg["role"] == "user" else "assistant"
-
-    st.markdown(f"""
-    <div class="message {msg_class}">
-        <div class="message-avatar">{avatar}</div>
-        <div class="message-content">{msg["content"]}</div>
+# Show empty state or messages
+if len(st.session_state.messages) == 0 and not st.session_state.is_typing:
+    st.markdown("""
+    <div class="empty-state">
+        <div class="empty-state-icon">💬</div>
+        <div class="empty-state-text">
+            Start a conversation by using the quick actions above or type your question below.
+        </div>
     </div>
     """, unsafe_allow_html=True)
+else:
+    # Display all messages
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"], avatar="👤" if msg["role"] == "user" else "🎓"):
+            st.markdown(msg["content"])
 
-# Show typing indicator if agent is processing
-if st.session_state.is_typing:
-    st.markdown("""
-    <div class="typing-indicator">
-        <div class="message-avatar">🎓</div>
-        <div class="typing-dots">
+    # Show typing indicator
+    if st.session_state.is_typing:
+        st.markdown("""
+        <div class="typing-indicator">
             <div class="typing-dot"></div>
             <div class="typing-dot"></div>
             <div class="typing-dot"></div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Input
-user_input = st.text_input(
+# ============================================================================
+# CHAT INPUT
+# ============================================================================
+
+# Use chat_input for automatic enter key handling and text clearing
+user_input = st.chat_input(
     "Ask me anything about LAUTECH...",
-    key="user_input",
-    placeholder="e.g., When is registration? What courses can I take? How much are fees?",
-    label_visibility="collapsed"
+    key="chat_input"
 )
 
-col1, col2, col3 = st.columns([2, 1, 1])
+if user_input:
+    # Add user message
+    st.session_state.messages.append({
+        "role": "user",
+        "content": user_input
+    })
 
+    # Set pending query
+    st.session_state.pending_query = user_input
+    st.session_state.is_typing = True
+    st.rerun()
+
+# Clear chat button
+col1, col2, col3 = st.columns([1, 1, 3])
 with col1:
-    if st.button("Send", type="primary", use_container_width=True):
-        if user_input:
-            # Add user message
-            st.session_state.messages.append({
-                "role": "user",
-                "content": user_input
-            })
-
-            # Set pending query and trigger typing indicator
-            st.session_state.pending_query = user_input
-            st.session_state.is_typing = True
-            st.rerun()
-
-with col2:
-    if st.button("Clear Chat", use_container_width=True):
+    if st.button("🗑️ Clear Chat", key="clear", use_container_width=True):
         st.session_state.messages = []
         st.session_state.session_id = str(uuid.uuid4())
+        st.session_state.query_count = 0
         st.rerun()
 
 # ============================================================================
-# STATS
+# FOOTER
 # ============================================================================
 
-st.markdown(f"""
-<div class="stats-bar">
-    <div class="stat">
-        <span class="stat-value">{st.session_state.query_count}</span>
-        <span class="stat-label">Queries</span>
-    </div>
-    <div class="stat">
-        <span class="stat-value">{len(st.session_state.messages) // 2}</span>
-        <span class="stat-label">Conversations</span>
-    </div>
-    <div class="stat">
-        <span class="stat-value">24/7</span>
-        <span class="stat-label">Available</span>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# Footer
 st.markdown("""
-<div style="text-align: center; padding: 2rem; color: var(--earth-medium); font-size: 0.875rem;">
-    <p>Powered by AWS Bedrock AgentCore • LAUTECH © 2024</p>
+<div class="footer">
+    Powered by AWS Bedrock AgentCore • LAUTECH © 2024
 </div>
 """, unsafe_allow_html=True)
 
@@ -692,10 +605,12 @@ st.markdown("""
 # AGENT INVOCATION - RUNS AT END AFTER UI IS RENDERED
 # ============================================================================
 
-# This runs AFTER all UI is rendered, so typing indicator is visible
 if st.session_state.is_typing and st.session_state.pending_query:
-    # Get response from agent (this will block, but typing indicator is already shown)
-    response = invoke_agent(st.session_state.pending_query, st.session_state.session_id)
+    # Get response from agent
+    response = invoke_agent(
+        st.session_state.pending_query,
+        st.session_state.session_id
+    )
 
     # Add response to messages
     st.session_state.messages.append({
@@ -703,7 +618,7 @@ if st.session_state.is_typing and st.session_state.pending_query:
         "content": response
     })
 
-    # Update counters
+    # Update counter
     st.session_state.query_count += 1
 
     # Reset typing state
