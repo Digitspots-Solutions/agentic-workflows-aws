@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Optional
 
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
+from bedrock_agentcore.memory import get_memory
 from strands import Agent, tool
 from strands.models import BedrockModel
 
@@ -327,6 +328,10 @@ def lautech_assistant(payload):
         user_input = payload.get("prompt")
         logger.info(f"User input: {user_input}")
 
+        # Get memory for this session (enables conversation context)
+        memory = get_memory()
+        logger.info(f"Memory initialized: {memory}")
+
         # Create orchestrator agent
         all_tools = [
             get_course_info,
@@ -338,7 +343,8 @@ def lautech_assistant(payload):
         agent = Agent(
             tools=all_tools,
             model=bedrock_model,
-            system_prompt=SYSTEM_PROMPT
+            system_prompt=SYSTEM_PROMPT,
+            memory=memory  # Add memory to agent
         )
 
         # Get response from agent
