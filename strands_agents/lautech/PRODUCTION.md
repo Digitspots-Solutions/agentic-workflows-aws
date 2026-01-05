@@ -8,14 +8,15 @@
 
 1. [Architecture Overview](#architecture-overview)
 2. [Database Migration (SQLite → RDS)](#database-migration)
-3. [Monitoring & Logging](#monitoring--logging)
-4. [Backup & Recovery](#backup--recovery)
-5. [Security Hardening](#security-hardening)
-6. [Rate Limiting](#rate-limiting)
-7. [Performance Optimization](#performance-optimization)
-8. [High Availability](#high-availability)
-9. [Cost Optimization](#cost-optimization)
-10. [Deployment Checklist](#deployment-checklist)
+3. [AgentCore Memory Setup](#agentcore-memory-setup)
+4. [Monitoring & Logging](#monitoring--logging)
+5. [Backup & Recovery](#backup--recovery)
+6. [Security Hardening](#security-hardening)
+7. [Rate Limiting](#rate-limiting)
+8. [Performance Optimization](#performance-optimization)
+9. [High Availability](#high-availability)
+10. [Cost Optimization](#cost-optimization)
+11. [Deployment Checklist](#deployment-checklist)
 
 ---
 
@@ -46,20 +47,23 @@
                    ┌──────────▼──────────┐
                    │  AWS AgentCore      │
                    │  (Lambda)           │
-                   └──────────┬──────────┘
-                              │
-                   ┌──────────▼──────────┐
-                   │  RDS PostgreSQL     │
-                   │  (Multi-AZ)         │
-                   └─────────────────────┘
-                              │
-                   ┌──────────▼──────────┐
-                   │  S3 (Backups)       │
-                   └─────────────────────┘
+                   └──────┬───────┬──────┘
+                          │       │
+                          │       └──────────────┐
+                          │                      │
+                   ┌──────▼──────────┐    ┌──────▼──────────┐
+                   │  RDS PostgreSQL │    │  AgentCore      │
+                   │  (Multi-AZ)     │    │  Memory         │
+                   └─────────────────┘    │  (DynamoDB)     │
+                          │                └─────────────────┘
+                   ┌──────▼──────────┐
+                   │  S3 (Backups)   │
+                   └─────────────────┘
 
 Monitoring: CloudWatch + X-Ray
 Secrets: AWS Secrets Manager
 DNS: Route 53
+Memory: AgentCore Memory Service (STM + LTM)
 ```
 
 ### Components
@@ -69,6 +73,7 @@ DNS: Route 53
 | **Database** | SQLite | RDS PostgreSQL (Multi-AZ) |
 | **Compute** | Local | ECS Fargate / EC2 Auto Scaling |
 | **Agent Runtime** | Local Strands | AWS AgentCore (Lambda) |
+| **Memory** | None/Local | AgentCore Memory (STM + LTM) |
 | **File Storage** | Local disk | S3 |
 | **Monitoring** | Logs | CloudWatch + X-Ray + CloudTrail |
 | **Secrets** | .env files | AWS Secrets Manager |
@@ -313,6 +318,164 @@ def get_db_connection():
 
 # Update lautech_agentcore.py to use this connection
 ```
+
+---
+
+## 🧠 AgentCore Memory Setup
+
+### Overview
+
+AgentCore Memory enables conversation context persistence across sessions. It consists of:
+- **Short-Term Memory (STM)**: Stores raw conversation events per session
+- **Long-Term Memory (LTM)**: Extracts and persists key facts, preferences, and summaries
+
+### Step 1: Create Memory Resource
+
+Memory resource is already created (`lautech_agentcore_mem-t0mrlqG7aA`). To create a new one:
+
+```bash
+# Using agentcore CLI
+agentcore memory create \
+  --name lautech_production_memory \
+  --description "Production memory for LAUTECH assistant" \
+  --mode STM_ONLY \
+  --event-expiry-days 30
+```
+
+### Step 2: Configure IAM Permissions
+
+**Critical:** The Lambda execution role needs permissions to access AgentCore Memory.
+
+```bash
+# Get the execution role name (from agentcore status)
+ROLE_NAME="agentcore-lautech-role"  # Replace with actual role name
+MEMORY_ARN="arn:aws:bedrock-agentcore:us-east-1:929557547206:memory/lautech_agentcore_mem-t0mrlqG7aA"
+
+# Add memory permissions
+aws iam put-role-policy \
+  --role-name $ROLE_NAME \
+  --policy-name AgentCoreMemoryAccess \
+  --policy-document "{
+    \"Version\": \"2012-10-17\",
+    \"Statement\": [
+      {
+        \"Effect\": \"Allow\",
+        \"Action\": [
+          \"bedrock-agentcore:ListEvents\",
+          \"bedrock-agentcore:CreateEvent\",
+          \"bedrock-agentcore:GetMemory\",
+          \"bedrock-agentcore:ListMemories\",
+          \"bedrock-agentcore:GetLongTermMemory\",
+          \"bedrock-agentcore:CreateLongTermMemory\",
+          \"bedrock-agentcore:DeleteLongTermMemory\"
+        ],
+        \"Resource\": \"$MEMORY_ARN\"
+      }
+    ]
+  }"
+```
+
+**Alternative: Managed Policy (Recommended for Production)**
+
+Create a managed policy for reusability:
+
+```bash
+# Create managed policy
+aws iam create-policy \
+  --policy-name LAUTECHAgentCoreMemoryPolicy \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "bedrock-agentcore:ListEvents",
+          "bedrock-agentcore:CreateEvent",
+          "bedrock-agentcore:GetMemory",
+          "bedrock-agentcore:ListMemories",
+          "bedrock-agentcore:GetLongTermMemory",
+          "bedrock-agentcore:CreateLongTermMemory",
+          "bedrock-agentcore:DeleteLongTermMemory",
+          "bedrock-agentcore:UpdateMemory"
+        ],
+        "Resource": "arn:aws:bedrock-agentcore:*:929557547206:memory/*"
+      }
+    ]
+  }'
+
+# Attach to role
+aws iam attach-role-policy \
+  --role-name $ROLE_NAME \
+  --policy-arn arn:aws:iam::929557547206:policy/LAUTECHAgentCoreMemoryPolicy
+```
+
+### Step 3: Update Environment Variables
+
+Add memory ID to your deployment configuration:
+
+```bash
+# In .bedrock_agentcore.yaml or environment
+export AGENTCORE_MEMORY_ID=lautech_agentcore_mem-t0mrlqG7aA
+```
+
+Or set in Lambda environment variables:
+
+```bash
+aws lambda update-function-configuration \
+  --function-name <lambda-function-name> \
+  --environment "Variables={AGENTCORE_MEMORY_ID=lautech_agentcore_mem-t0mrlqG7aA}"
+```
+
+### Step 4: Verify Memory Access
+
+Test that the agent can access memory:
+
+```bash
+# Invoke agent with session ID
+agentcore invoke '{"prompt":"Hello, remember my name is John"}' \
+  --session-id test-session-001
+
+# Second invocation in same session
+agentcore invoke '{"prompt":"What is my name?"}' \
+  --session-id test-session-001
+
+# Should respond with "John" if memory is working
+```
+
+### Step 5: Monitor Memory Usage
+
+```bash
+# List memory events
+agentcore memory list-events \
+  --memory-id lautech_agentcore_mem-t0mrlqG7aA \
+  --session-id test-session-001
+
+# Check memory status
+agentcore memory describe \
+  --memory-id lautech_agentcore_mem-t0mrlqG7aA
+```
+
+### Production Considerations
+
+1. **Session Management**
+   - Use authenticated user IDs as `actor_id`
+   - Generate persistent session IDs (store in cookies/localStorage)
+   - Implement session expiry (30 days recommended)
+
+2. **Memory Cleanup**
+   - Configure event expiry (30 days for STM)
+   - Implement LTM cleanup for deleted users
+   - Monitor memory costs in CloudWatch
+
+3. **Error Handling**
+   - Gracefully degrade if memory service is unavailable
+   - Log memory access failures
+   - Don't block requests on memory errors
+
+4. **Scaling**
+   - Memory is serverless and scales automatically
+   - No additional capacity planning needed
+   - Monitor DynamoDB read/write capacity
 
 ---
 
