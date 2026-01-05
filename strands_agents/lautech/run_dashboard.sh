@@ -47,33 +47,9 @@ fi
 # Get agent ID from environment or use default
 AGENT_ID="${LAUTECH_AGENT_ID:-lautech_agentcore-U7qNy1GPsE}"
 
-# Ask user which agent to use
-echo "Select agent mode:"
-echo "  1) AWS Lambda (deployed production agent)"
-echo "  2) Local Docker (development mode)"
-read -p "Enter choice [1-2]: " mode_choice
-
-export USE_LOCAL_AGENT=false
-if [ "$mode_choice" = "2" ]; then
-    export USE_LOCAL_AGENT=true
-    echo ""
-    echo "✅ Using LOCAL Docker agent"
-    echo "   Make sure AgentCore is running in Docker:"
-    echo "   cd strands_agents/lautech && agentcore launch --local"
-else
-    echo ""
-    echo "✅ Using AWS Lambda agent"
-fi
-
-echo ""
 echo "🚀 Launching dashboard..."
 echo "   Agent ID: $AGENT_ID"
 echo "   Region: ${AWS_DEFAULT_REGION:-us-east-1}"
-if [ "$USE_LOCAL_AGENT" = "true" ]; then
-    echo "   Mode: LOCAL DOCKER"
-else
-    echo "   Mode: AWS LAMBDA"
-fi
 echo ""
 echo "📱 Dashboard will open at: http://localhost:8501"
 echo ""
