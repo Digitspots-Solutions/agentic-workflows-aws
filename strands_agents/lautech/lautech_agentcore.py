@@ -14,10 +14,13 @@ Features:
 import logging
 import json
 import sqlite3
+import os
 from pathlib import Path
 from typing import Optional
 
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
+from bedrock_agentcore.memory.integrations.strands.config import AgentCoreMemoryConfig
+from bedrock_agentcore.memory.integrations.strands.session_manager import AgentCoreMemorySessionManager
 from strands import Agent, tool
 from strands.models import BedrockModel
 
@@ -30,6 +33,9 @@ app = BedrockAgentCoreApp()
 
 # Database path
 DB_PATH = Path("lautech_data.db")
+
+# Memory ID (from agentcore memory list)
+MEMORY_ID = os.getenv('AGENTCORE_MEMORY_ID', 'lautech_agentcore_mem-t0mrlqG7aA')
 
 # ============================================================================
 # DATABASE SETUP
@@ -327,9 +333,27 @@ def lautech_assistant(payload):
         user_input = payload.get("prompt")
         logger.info(f"User input: {user_input}")
 
-        # Create orchestrator agent with tools
-        # Note: Memory is automatically managed by AgentCore framework
-        # when session IDs are provided via the invoke command
+        # Get session info from payload context
+        # AgentCore automatically provides session_id and actor_id in the context
+        session_id = payload.get("session_id", "default_session")
+        actor_id = payload.get("actor_id", "default_actor")
+
+        logger.info(f"Session ID: {session_id}, Actor ID: {actor_id}")
+
+        # Configure AgentCore Memory
+        memory_config = AgentCoreMemoryConfig(
+            memory_id=MEMORY_ID,
+            session_id=session_id,
+            actor_id=actor_id
+        )
+
+        # Create session manager with memory
+        session_manager = AgentCoreMemorySessionManager(
+            agentcore_memory_config=memory_config,
+            region_name="us-east-1"
+        )
+
+        # Create orchestrator agent with tools and memory
         all_tools = [
             get_course_info,
             get_schedule_info,
@@ -340,7 +364,8 @@ def lautech_assistant(payload):
         agent = Agent(
             tools=all_tools,
             model=bedrock_model,
-            system_prompt=SYSTEM_PROMPT
+            system_prompt=SYSTEM_PROMPT,
+            session_manager=session_manager  # Enable memory!
         )
 
         # Get response from agent
