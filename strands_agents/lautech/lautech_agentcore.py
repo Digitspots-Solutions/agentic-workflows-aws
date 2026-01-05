@@ -15,6 +15,7 @@ import logging
 import json
 import sqlite3
 import os
+import shutil
 from pathlib import Path
 from typing import Optional
 
@@ -32,7 +33,10 @@ logger = logging.getLogger(__name__)
 app = BedrockAgentCoreApp()
 
 # Database path
-DB_PATH = Path("lautech_data.db")
+# In Lambda, use /tmp for writable storage
+# Copy from deployment package if exists
+DB_PATH = Path("/tmp/lautech_data.db")
+PACKAGED_DB_PATH = Path("lautech_data.db")  # In deployment package
 
 # Memory ID (from agentcore memory list)
 MEMORY_ID = os.getenv('AGENTCORE_MEMORY_ID', 'lautech_agentcore_mem-t0mrlqG7aA')
@@ -327,8 +331,16 @@ def lautech_assistant(payload):
     """
     try:
         # Initialize database if needed
+        # First, check if we have a packaged database to copy
         if not DB_PATH.exists():
-            init_database()
+            if PACKAGED_DB_PATH.exists():
+                # Copy packaged database to /tmp (writable in Lambda)
+                logger.info(f"📦 Copying packaged database to {DB_PATH}")
+                shutil.copy(PACKAGED_DB_PATH, DB_PATH)
+            else:
+                # No packaged database, create fresh one with sample data
+                logger.info("🆕 No packaged database found, creating fresh one")
+                init_database()
 
         user_input = payload.get("prompt")
         logger.info(f"User input: {user_input}")
