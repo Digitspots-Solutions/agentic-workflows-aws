@@ -393,12 +393,17 @@ st.markdown("""
 # ============================================================================
 
 AGENT_ID = os.getenv('LAUTECH_AGENT_ID', 'lautech_agentcore-U7qNy1GPsE')
+USE_LOCAL_AGENT = os.getenv('USE_LOCAL_AGENT', 'false').lower() == 'true'
 
 def invoke_agent(prompt: str, session_id: str = None):
-    """Invoke the deployed AgentCore agent via CLI"""
+    """Invoke the AgentCore agent via CLI (local or AWS)"""
     try:
         payload = json.dumps({"prompt": prompt})
         cmd = ['agentcore', 'invoke', payload]
+
+        # Use local Docker instance if configured
+        if USE_LOCAL_AGENT:
+            cmd.append('--local')
 
         if session_id:
             cmd.extend(['--session-id', session_id])
