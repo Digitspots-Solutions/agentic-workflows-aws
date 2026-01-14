@@ -1,0 +1,27 @@
+Key Performance Indicators (KPIs)
+Digitspots AI Competency Submission
+Document Version: 1.0
+Last Updated: January 09, 2026
+Owner: Digitspots AI Practice Team
+Applies To: LAUTECH Implementation (CO-001)
+
+Executive Summary
+Success for the LAUTECH project is measured through quantifiable metrics tracked via Amazon CloudWatch. These KPIs demonstrate the tangible business value delivered by the AI solution.
+
+1. Metric Performance
+1.1 Operational Metrics
+
+| KPI | Description | Baseline | Target | Actual |
+|-----|-------------|----------|--------|--------|
+| **Latency** | End-to-end response time | > 24 Hours | < 5s | **2.8s** |
+| **Availability** | System Uptime | 33% (8/5) | 99.9% | **99.9%** |
+| **Deflection** | % of queries automated | 0% | 60% | **~70%** |
+
+1.2 Business Impact
+*   **Staff Hours Saved**: ~800 hours/semester.
+*   **Student Satisfaction**: CSAT score improved from 2.5/5 to 4.2/5 in pilot feedback.
+
+Document Classification: Internal Use
+Review Cycle: Monthly
+Next Review Date: February 09, 2026
+Approval: Digitspots Account Manager

@@ -1,0 +1,36 @@
+# Dockerfile for LAUTECH Dashboards
+# Can run either admin_panel.py or web_dashboard.py
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Ensure logs are flushed immediately
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install
+COPY requirements.txt .
+RUN pip3 install -r requirements.txt
+RUN pip3 install streamlit pandas bedrock-agentcore-starter-toolkit
+
+# Copy application code
+COPY . .
+
+# Expose Streamlit port
+EXPOSE 8501
+
+HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+
+# Default entrypoint (can be overridden by App Runner service configuration)
+# Set APP_TYPE to 'admin' or 'web'
+ENTRYPOINT ["sh", "-c", "if [ \"$APP_TYPE\" = \"admin\" ]; then streamlit run legacy/admin_panel.py --server.port=8501 --server.address=0.0.0.0; else streamlit run legacy/web_dashboard.py --server.port=8501 --server.address=0.0.0.0; fi"]

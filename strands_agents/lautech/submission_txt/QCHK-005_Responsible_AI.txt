@@ -1,0 +1,55 @@
+Responsible AI Guidelines
+Digitspots AI Competency Submission
+Document Version: 1.0
+Last Updated: January 09, 2026
+Owner: Digitspots AI Practice Team
+Applies To: QCHK-005 Responsible AI Requirement
+
+REQUIREMENT:
+Does your consulting services practice demonstrate expertise in implementing comprehensive responsible AI controls to ensure trustworthy autonomous operations for client implementations?
+
+Executive Summary
+Digitspots demonstrates proven expertise in implementing AWS-managed AI safety services (Amazon Bedrock Guardrails) that prevent harmful outputs, enforce safety guardrails, and apply human feedback for trustworthy autonomous operations.
+
+1. Amazon Bedrock Guardrails
+We utilize Bedrock Guardrails as our primary responsible AI control mechanism.
+
+1.1 Content Policy Configuration
+*   SEXUAL: HIGH input/output filtering
+*   VIOLENCE: HIGH input/output filtering
+*   HATE: HIGH input/output filtering
+*   INSULTS: MEDIUM input, HIGH output filtering
+*   MISCONDUCT: HIGH input/output filtering
+*   PROMPT_ATTACK: HIGH input filtering (jailbreak protection)
+
+1.2 Topic Denial Policy
+*   Political-Content: Blocked (elections, political opinions)
+*   Religious-Debates: Blocked (proselytizing, comparative religion)
+*   Illegal-Activities: Blocked (cheating, exam malpractice, hacking)
+*   Personal-Advice: Blocked (medical, legal, financial advice outside scope)
+
+2. PII Protection
+Sensitive Information Policy:
+*   EMAIL, PHONE: Anonymized (replaced with [REDACTED])
+*   CREDIT_DEBIT_CARD_NUMBER, US_SOCIAL_SECURITY_NUMBER: Blocked
+*   PASSWORD, PIN: Blocked
+*   AWS_ACCESS_KEY, AWS_SECRET_KEY: Blocked
+
+3. Human Feedback Loop (Testing Protocol)
+We implemented a structured testing protocol to validate guardrail behavior before production:
+*   Test Suite: 4 standard test cases (valid queries, off-topic, jailbreak attempts)
+*   Validation: Automated pass/fail verification against expected outcomes
+*   Iteration: Guardrail configuration refined based on test results
+
+4. User Transparency
+*   AI Disclosure: The agent introduces itself as an "AI Assistant" in the welcome message
+*   Graceful Uncertainty: Programmed to admit "I could not find that information" rather than fabricating answers
+*   Blocked Message: Clear, helpful rejection messages when guardrails trigger
+
+5. Evidence Artifacts
+*   Guardrail setup script: setup/setup_guardrails.py
+
+Document Classification: Internal Use
+Review Cycle: Quarterly
+Next Review Date: April 09, 2026
+Approval: Digitspots Technical Director

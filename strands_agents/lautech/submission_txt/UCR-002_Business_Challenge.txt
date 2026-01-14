@@ -1,0 +1,25 @@
+Business Challenge Analysis
+Digitspots AI Competency Submission
+Document Version: 1.0
+Last Updated: January 09, 2026
+Owner: Digitspots AI Practice Team
+Applies To: LAUTECH Implementation (UCR-002)
+
+Executive Summary
+LAUTECH faced a critical scalability crisis in its student support operations. The manual handling of routine inquiries created a massive backlog, leading to poor student satisfaction and operational inefficiencies. The university needed a solution to deflect routine queries and free up staff for complex issues.
+
+1. Problem Statement
+1.1 Operational Bottlenecks
+*   **Volume Overload**: Physical queues at the Student Affairs office often exceeded 4-hour wait times during registration weeks.
+*   **Response Latency**: Email inquiries had a turnaround time of 24-48 hours, causing students to miss critical deadlines.
+*   **Staff Burnout**: Administrative staff spent ~90% of their time answering the same top 10 FAQs (Fees, Resumption Dates, Hostels).
+
+1.2 Information Fragmentation
+Critical data was siloed across different departments (Bursary, Registry, Student Affairs). This resulted in students receiving conflicting information depending on whom they asked, eroding trust in the administration.
+
+2. Impact of Inaction
+Without intervention, the university projected a decline in enrollment yields and an increase in student attrition due to perceived administrative incompetence.
+
+Document Classification: Internal Use
+Review Cycle: N/A (One-time Assessment)
+Approval: Digitspots Technical Director

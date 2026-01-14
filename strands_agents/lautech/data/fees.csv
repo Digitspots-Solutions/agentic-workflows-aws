@@ -1,0 +1,21 @@
+level,amount,fee_type,session
+100 Level,100000,Tuition + Acceptance Fee,2024/2025
+200 Level,75000,Tuition,2024/2025
+300 Level,75000,Tuition,2024/2025
+400 Level,75000,Tuition,2024/2025
+500 Level,85000,Tuition,2024/2025
+PG Masters,150000,Tuition,2024/2025
+PG PhD,200000,Tuition,2024/2025
+Hostel,25000,Accommodation,2024/2025
+Medical,5000,Health Services,2024/2025
+Library,3000,Library Access,2024/2025
+Sports,2000,Sports Facilities,2024/2025
+Student Union,1000,Student Activities,2024/2025
+ICT,3000,ICT Services,2024/2025
+Lab Fee (Science),10000,Laboratory,2024/2025
+Lab Fee (Engineering),15000,Laboratory,2024/2025
+Project Supervision,20000,Final Year Project,2024/2025
+Transcript (UG),10000,Administrative,2024/2025
+Transcript (PG),15000,Administrative,2024/2025
+Verification Letter,5000,Administrative,2024/2025
+Student ID Card,2000,Administrative,2024/2025

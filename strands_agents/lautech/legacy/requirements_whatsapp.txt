@@ -1,0 +1,19 @@
+# LAUTECH WhatsApp Bot Requirements
+
+# Web framework
+flask==3.0.0
+
+# Twilio WhatsApp API
+twilio==8.11.0
+
+# AWS SDK
+boto3==1.34.20
+
+# Optional: Rate limiting
+flask-limiter==3.5.0
+
+# Optional: Production server
+gunicorn==21.2.0
+
+# Optional: Environment management
+python-dotenv==1.0.0

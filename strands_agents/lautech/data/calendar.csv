@@ -1,0 +1,37 @@
+event_type,event_date,semester,session,description
+Registration Start,2024-09-01,First Semester,2024/2025,Online registration opens for all students
+Registration End,2024-09-15,First Semester,2024/2025,Last day for regular registration
+Late Registration Start,2024-09-16,First Semester,2024/2025,Late registration with penalty fee
+Late Registration End,2024-09-22,First Semester,2024/2025,Final deadline for registration
+Semester Start,2024-09-23,First Semester,2024/2025,Classes commence
+Add/Drop Period Start,2024-09-23,First Semester,2024/2025,Period to add or drop courses
+Add/Drop Period End,2024-09-30,First Semester,2024/2025,Last day to modify course registration
+Mid-Semester Break,2024-11-04,First Semester,2024/2025,One week break
+Mid-Semester Exams Start,2024-11-11,First Semester,2024/2025,Mid-term examinations begin
+Mid-Semester Exams End,2024-11-15,First Semester,2024/2025,Mid-term examinations end
+Course Withdrawal Deadline,2024-11-20,First Semester,2024/2025,Last day to withdraw from courses
+Semester End,2024-12-20,First Semester,2024/2025,Last day of classes
+Exam Clearance Deadline,2024-12-30,First Semester,2024/2025,Complete all clearances before exams
+Examination Period Start,2025-01-06,First Semester,2024/2025,Final examinations begin
+Examination Period End,2025-01-20,First Semester,2024/2025,Final examinations end
+Semester Break Start,2025-01-21,First Semester,2024/2025,Semester break begins
+Registration Start,2025-02-01,Second Semester,2024/2025,Online registration opens
+Registration End,2025-02-15,Second Semester,2024/2025,Last day for regular registration
+Late Registration Start,2025-02-16,Second Semester,2024/2025,Late registration with penalty
+Late Registration End,2025-02-22,Second Semester,2024/2025,Final registration deadline
+Semester Start,2025-02-23,Second Semester,2024/2025,Classes commence
+Add/Drop Period Start,2025-02-23,Second Semester,2024/2025,Period to add or drop courses
+Add/Drop Period End,2025-03-02,Second Semester,2024/2025,Last day to modify registration
+Mid-Semester Break,2025-04-14,Second Semester,2024/2025,One week break
+Mid-Semester Exams Start,2025-04-21,Second Semester,2024/2025,Mid-term examinations begin
+Mid-Semester Exams End,2025-04-25,Second Semester,2024/2025,Mid-term examinations end
+Course Withdrawal Deadline,2025-05-05,Second Semester,2024/2025,Last day to withdraw
+Semester End,2025-06-15,Second Semester,2024/2025,Last day of classes
+Exam Clearance Deadline,2025-06-12,Second Semester,2024/2025,Complete all clearances
+Examination Period Start,2025-06-20,Second Semester,2024/2025,Final examinations begin
+Examination Period End,2025-07-10,Second Semester,2024/2025,Final examinations end
+Long Vacation Start,2025-07-11,Second Semester,2024/2025,Academic break begins
+Industrial Training Start,2025-07-15,Second Semester,2024/2025,IT begins for eligible students
+Hostel Application Deadline,2024-08-15,Both,2024/2025,Last day to apply for accommodation
+Payment Deadline,2024-09-15,First Semester,2024/2025,Fee payment deadline
+Payment Deadline,2025-02-15,Second Semester,2024/2025,Fee payment deadline

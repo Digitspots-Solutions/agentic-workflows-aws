@@ -1,0 +1,45 @@
+Agent Interoperability Guidelines
+Digitspots AI Competency Submission
+Document Version: 1.0
+Last Updated: January 09, 2026
+Owner: Digitspots AI Practice Team
+Applies To: QCHK-003 Interoperability Requirement
+
+REQUIREMENT:
+Does your services practice demonstrate expertise in implementing interoperability solutions for agent applications that require cross-agent coordination or integration with external tools and services?
+
+Executive Summary
+Digitspots demonstrates experience implementing secure agent interoperability using standard protocols (MCP) and integration capabilities for connecting agents with tools, services, and memory constructs.
+
+1. Tool Integration Pattern
+Our agents connect to external data sources through Python tool functions that serve as a "semantic translation layer" between natural language and structured data systems:
+*   Database Integration: Tools use psycopg2 to connect to Amazon RDS PostgreSQL
+*   Credential Management: Database credentials are retrieved from AWS Secrets Manager at runtime, never hardcoded
+*   Data Transformation: Tool functions accept natural language parameters, sanitize inputs, execute SQL queries, and return JSON-formatted results
+
+2. MCP (Model Context Protocol) Capability
+Our practice has demonstrated integration with MCP servers for dynamic tool discovery:
+*   Implementation: We use the Strands MCPClient to connect to MCP-compliant tool servers
+*   Example: aws-diagram-mcp-server for architecture diagram generation
+*   Benefit: Agents can discover and invoke tools at runtime without hardcoded schemas
+
+3. Memory Constructs
+We implement multi-layer memory for cross-session context:
+*   Short-Term Memory (STM): Conversation history stored in DynamoDB per session
+*   Long-Term Memory (LTM): User preferences and facts persisted across sessions
+*   Session Identity: Each user receives a unique session_id to isolate their conversation context
+
+4. Multi-Channel Interoperability
+The agent architecture supports multiple ingress channels:
+*   Web Dashboard: Streamlit application hosted on ECS Fargate
+*   WhatsApp (Planned): Webhook adapter for messaging integration
+*   Unified Backend: All channels invoke the same Bedrock AgentCore runtime
+
+5. Evidence Artifacts
+*   MCP integration example: setup/generate_diagram_mcp.py
+*   Agent memory configuration: lautech_agentcore.py
+
+Document Classification: Internal Use
+Review Cycle: Quarterly
+Next Review Date: April 09, 2026
+Approval: Digitspots Technical Director

@@ -1,0 +1,59 @@
+Compute Architecture Guidelines
+Digitspots AI Competency Submission
+Document Version: 1.0
+Last Updated: January 09, 2026
+Owner: Digitspots AI Practice Team
+Applies To: QCHK-006 Compute Requirement
+
+REQUIREMENT:
+Does your services practice demonstrate expertise in deploying agent workloads on AWS managed compute services?
+
+Executive Summary
+Digitspots demonstrates experience utilizing AWS managed compute services (Bedrock AgentCore, ECS, Fargate, RDS) to deploy agent solutions with optimized security posture and cost efficiency.
+
+1. Compute Architecture
+
+1.1 Amazon Bedrock AgentCore (Agent Runtime)
+*   Purpose: Hosts the agent orchestration logic
+*   Benefit: Fully managed, serverless execution with zero idle cost
+*   Integration: BedrockAgentCoreApp WSGI application deployed via AWS SDK
+
+1.2 AWS Fargate (Containerized User Interface)
+*   Purpose: Hosts Streamlit dashboards (Student Dashboard, Admin Panel)
+*   Configuration: 0.5 vCPU, 1 GB RAM per task
+*   Scaling: ECS Service with desired count of 1 (scalable to 10)
+*   Capacity Providers: FARGATE and FARGATE_SPOT configured for cost optimization
+
+1.3 Amazon RDS PostgreSQL (Data Layer)
+*   Purpose: Stores structured university data (courses, fees, calendar, hostels)
+*   Instance Class: db.t3.micro (Free Tier eligible)
+*   Storage: 20 GB GP3 SSD, encrypted at rest
+*   Backups: 7-day automated backup retention
+
+2. Service Selection Rationale
+
+| Use Case | Selected | Rejected | Reason |
+|----------|----------|----------|--------|
+| Agent Logic | Bedrock AgentCore | EC2 | Serverless scaling, no idle cost |
+| UI Hosting | Fargate | Lambda | WebSocket support for Streamlit |
+| Data Storage | RDS PostgreSQL | DynamoDB | Relational integrity for academic data |
+
+3. Cost Efficiency Measures
+*   Serverless-first approach eliminates idle compute costs
+*   Fargate Spot capacity provider available for development environments
+*   RDS Free Tier instance suitable for workload scale
+
+4. Security Posture
+*   All compute workloads run with IAM execution roles
+*   No SSH/RDP access to containers (Fargate)
+*   Security groups restrict traffic between tiers
+
+5. Evidence Artifacts
+*   ECS deployment script: setup/deploy_ecs.py
+*   Container definition: Dockerfile.dashboards
+*   Architecture diagram: LAUTECH_Architecture_Diagram_V2.png
+
+Document Classification: Internal Use
+Review Cycle: Quarterly
+Next Review Date: April 09, 2026
+Approval: Digitspots Technical Director

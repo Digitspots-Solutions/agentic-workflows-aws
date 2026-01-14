@@ -1,0 +1,102 @@
+default_agent: lautech_agentcore
+agents:
+  lautech_assistant:
+    name: lautech_assistant
+    entrypoint: lautech_agentcore.py
+    deployment_type: container
+    runtime_type: null
+    platform: linux/arm64
+    container_runtime: docker
+    source_path: null
+    aws:
+      execution_role: null
+      execution_role_auto_create: true
+      account: null
+      region: us-east-1
+      ecr_repository: null
+      ecr_auto_create: false
+      s3_path: null
+      s3_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+      lifecycle_configuration:
+        idle_runtime_session_timeout: null
+        max_lifetime: null
+    bedrock_agentcore:
+      agent_id: null
+      agent_arn: null
+      agent_session_id: null
+    codebuild:
+      project_name: null
+      execution_role: null
+      source_bucket: null
+    memory:
+      mode: STM_ONLY
+      memory_id: null
+      memory_arn: null
+      memory_name: null
+      event_expiry_days: 30
+      first_invoke_memory_check_done: false
+      was_created_by_toolkit: false
+    identity:
+      credential_providers: []
+      workload: null
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null
+  lautech_agentcore:
+    name: lautech_agentcore
+    entrypoint: /Users/MAC/projects/agentic-workshop/strands_agents/lautech/lautech_agentcore.py
+    deployment_type: container
+    runtime_type: null
+    platform: linux/arm64
+    container_runtime: none
+    source_path: /Users/MAC/projects/agentic-workshop/strands_agents/lautech
+    aws:
+      execution_role: arn:aws:iam::715841330456:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-7fed580dbf
+      execution_role_auto_create: false
+      account: '715841330456'
+      region: us-east-1
+      ecr_repository: 715841330456.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-lautech_agentcore
+      ecr_auto_create: false
+      s3_path: null
+      s3_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+      lifecycle_configuration:
+        idle_runtime_session_timeout: null
+        max_lifetime: null
+    bedrock_agentcore:
+      agent_id: lautech_agentcore-KLZaaW7AR6
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:715841330456:runtime/lautech_agentcore-KLZaaW7AR6
+      agent_session_id: cca40db4-b25d-4464-8326-e3d0d7f6eb59
+    codebuild:
+      project_name: bedrock-agentcore-lautech_agentcore-builder
+      execution_role: arn:aws:iam::715841330456:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-7fed580dbf
+      source_bucket: bedrock-agentcore-codebuild-sources-715841330456-us-east-1
+    memory:
+      mode: STM_AND_LTM
+      memory_id: lautech_agentcore_mem-yeGCqwG7EM
+      memory_arn: arn:aws:bedrock-agentcore:us-east-1:715841330456:memory/lautech_agentcore_mem-yeGCqwG7EM
+      memory_name: lautech_agentcore_mem
+      event_expiry_days: 30
+      first_invoke_memory_check_done: true
+      was_created_by_toolkit: true
+    identity:
+      credential_providers: []
+      workload: null
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration:
+      workload_name: workload-1468ec07
+      userId: null

@@ -1,0 +1,47 @@
+# AWS AI Competency Submission - Final Evidence Checklist
+
+## 1. Practice Requirements (QCHK)
+- [x] QCHK-001_Inference.txt
+- [x] QCHK-002_SDKs_Tooling.txt
+- [x] QCHK-003_Interoperability.txt
+- [x] QCHK-004_Security.txt
+- [x] QCHK-005_Responsible_AI.txt
+- [x] QCHK-006_Compute.txt
+
+## 2. Customer Example - LAUTECH (UCR, PS, CO)
+- [x] UCR-001_About_Customer.txt
+- [x] UCR-002_Business_Challenge.txt
+- [x] UCR-003_Goals_Objectives.txt
+- [x] UCR-004_Designation_Fit.txt
+- [x] PS-001_Technical_Solution.txt
+- [x] PS-002_Solution_Optimality.txt
+- [x] PS-003_Production_Status.txt
+- [x] PS-004_Customer_Opportunity.txt
+- [x] PS-005_AWS_Service_Usage.txt
+- [x] CO-001_KPIs.txt
+- [x] CO-002_Continuous_Improvement.txt
+
+## 3. Agentic AI Specific Requirements (AGAIPS)
+- [x] AGAIPS-001_Implementation_Approach.txt
+- [x] AGAIPS-002_Security_Interoperability.txt
+- [x] AGAIPS-003_Responsible_AI_Practice.txt
+- [x] AGAIPS-004_Compute_Practice.txt
+
+## 4. Common Requirements
+- [x] ACCT-001_Account_Governance.txt
+- [x] ACCT-002_Identity_Best_Practice.txt
+- [x] NETSEC-001_VPC_Security.txt
+- [x] NETSEC-002_Encryption.txt
+- [x] OPE-001_Workload_Health.txt
+- [x] OPE-002_Runbooks.txt
+- [x] OPE-003_Deployment_Testing.txt
+- [x] REL-001_IaC.txt
+- [x] REL-002_Disaster_Recovery.txt
+- [x] COST-001_TCO.txt
+- [x] DOC-001_Architecture_Diagram.txt
+- [x] DOC-002_Deployment_Guide.txt
+- [x] DOC-003_Customer_Documentation.txt
+- [x] DOC-005_Seller_Toolkit.txt
+
+Files Location: `submission_txt/`
+Total Files: 33

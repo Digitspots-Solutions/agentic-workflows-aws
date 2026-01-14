@@ -1,0 +1,48 @@
+SDK and Tooling Guidelines
+Digitspots AI Competency Submission
+Document Version: 1.0
+Last Updated: January 09, 2026
+Owner: Digitspots AI Practice Team
+Applies To: QCHK-002 SDKs/Tooling Requirement
+
+REQUIREMENT:
+Does your services practice demonstrate expertise in using AWS-compatible agent development frameworks (such as Strands)?
+
+Executive Summary
+Digitspots demonstrates expertise in implementing agent workloads using AWS-compatible frameworks. Our practice has standardized on the Strands Agents SDK for agentic AI implementations due to its native integration with Amazon Bedrock AgentCore.
+
+1. Framework Selection
+We evaluated multiple agent frameworks against the following criteria:
+*   AWS service integration depth
+*   Tool definition simplicity
+*   Memory management capabilities
+*   Production deployment readiness
+
+2. Selected Framework
+Framework: Strands Agents SDK
+
+Rationale:
+*   Native Integration: Strands provides first-class support for BedrockAgentCoreApp runtime, enabling seamless deployment to AWS Lambda
+*   Type-Safe Tools: The @tool decorator pattern generates JSON schemas automatically from Python function signatures and docstrings
+*   Built-in Memory: AgentCoreMemorySessionManager integrates directly with DynamoDB for conversation persistence
+*   Production-Ready: Designed specifically for AWS Lambda/Fargate deployment patterns
+
+3. Alternatives Evaluated and Rejected
+*   LangChain: More community adoption but heavier dependencies; less optimized for Bedrock-specific features
+*   LangGraph: Excellent for complex workflows but overkill for our tool-calling use case
+*   Custom Implementation: Lower-level control but significantly higher development time
+
+4. Implementation Components
+Our implementation uses the following Strands components:
+*   Agent: Orchestrates tool selection and LLM invocation
+*   @tool decorator: Defines callable functions (get_course_info, get_financial_info, get_hostel_info, get_schedule_info)
+*   BedrockModel: Configures the Foundation Model with guardrails
+*   AgentCoreMemorySessionManager: Persists conversation state to DynamoDB
+
+5. Evidence Artifacts
+*   Agent implementation: lautech_agentcore.py
+
+Document Classification: Internal Use
+Review Cycle: Quarterly
+Next Review Date: April 09, 2026
+Approval: Digitspots Technical Director

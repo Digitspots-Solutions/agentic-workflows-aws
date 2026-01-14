@@ -1,0 +1,41 @@
+Inference Architecture Guidelines
+Digitspots AI Competency Submission
+Document Version: 1.0
+Last Updated: January 09, 2026
+Owner: Digitspots AI Practice Team
+Applies To: QCHK-001 Inference Requirement
+
+REQUIREMENT:
+Does your services practice demonstrate expertise in implementing agent solutions using LLMs/models available through AWS managed services (Bedrock and SageMaker)?
+
+Executive Summary
+Digitspots demonstrates proven expertise in implementing agent solutions using Amazon Bedrock Foundation Models. Our practice has established a standardized model selection methodology that evaluates customer requirements against available models based on latency, cost, reasoning capability, and context window requirements.
+
+1. Model Selection Approach
+For the LAUTECH customer example, we evaluated multiple Foundation Models available through Amazon Bedrock based on four key factors:
+
+| Factor | Requirement | Selected Solution |
+|--------|-------------|-------------------|
+| **Latency** | Sub-5-second responses | Haiku (fastest in Claude family) |
+| **Cost** | Public university budget | 10x cheaper than Opus |
+| **Reasoning** | Multi-step query decomposition | Sufficient for tool-calling |
+| **Context Window** | Conversation memory | 200K tokens |
+
+2. Selected Model
+Model: Claude 3.5 Haiku (us.anthropic.claude-3-5-haiku-20241022-v1:0)
+
+Rationale: We selected Haiku over larger models (Sonnet, Opus) because it provides sufficient reasoning capability for the defined tool-calling use cases (course lookup, fee calculation, hostel allocation) at 10x lower cost per token and 3x faster inference latency.
+
+3. Alternatives Evaluated and Rejected
+*   Claude 3.5 Sonnet: Better reasoning but 5x higher cost; overkill for FAQ-style queries
+*   Amazon Titan: Lower cost but insufficient tool-calling reliability in our benchmarks
+*   Llama 3.1 70B: Required self-hosted infrastructure, increasing operational complexity
+
+4. Evidence Artifacts
+*   Architecture diagram: LAUTECH_Architecture_Diagram_V2.png
+*   Agent implementation: lautech_agentcore.py
+
+Document Classification: Internal Use
+Review Cycle: Quarterly
+Next Review Date: April 09, 2026
+Approval: Digitspots Technical Director
