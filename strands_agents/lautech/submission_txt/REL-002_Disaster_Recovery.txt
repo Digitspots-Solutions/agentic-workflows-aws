@@ -1,0 +1,37 @@
+Disaster Recovery Strategy
+Digitspots AI Competency Submission
+Document Version: 2.0
+Last Updated: January 12, 2026
+Owner: Digitspots Cloud Operations Team
+Applies To: LAUTECH AWS Account (REL-002)
+
+REQUIREMENT:
+Plan for disaster recovery and recommend RTO/RPO targets. Explain the recovery process for core components.
+
+Executive Summary
+Digitspots defines specific resiliency targets for all AI workloads. For LAUTECH, we balance the cost of redundancy against the university's tolerance for downtime, resulting in a robust Backup & Restore strategy.
+
+1. Resiliency Targets
+*   **Recovery Point Objective (RPO)**: **5 Minutes**.
+    *   *Mechanism*: Amazon RDS Point-in-Time Recovery (PITR) with transaction logs backed up every 5 minutes.
+*   **Recovery Time Objective (RTO)**: **4 Hours**.
+    *   *Mechanism*: The time required to spin up a new RDS instance from snapshot and redeploy ECS containers via the automation scripts.
+
+2. Architecture Resilience
+*   **Stateless Layer (Bedrock/Lambda/ECS)**:
+    *   Inherently resilient. If an Availability Zone (AZ) fails, the ALB automatically routes traffic to healthy tasks in the remaining AZs.
+*   **Stateful Layer (RDS)**:
+    *   **Current State**: Single-AZ (Cost Optimization).
+    *   **Recovery Process**: In a zonal failure, we initiate a `RestoreDBInstanceFromDBSnapshot` API call to launch a new DB in a healthy zone.
+
+3. Customer Acceptance
+*   **Communication**: The university CIO explicitly accepted the "Single-AZ" tradeoff to reduce monthly spend by ~$40/month during the pilot phase.
+*   **Upgrade Path**: We have provided a fast-path plan to upgrade to Multi-AZ ("ClickOps" modify) for the main enrollment season.
+
+4. Evidence Artifacts
+*   Backup Config: `setup/setup_rds.py` (line 228: `BackupRetentionPeriod=7`).
+
+Document Classification: Internal Use
+Review Cycle: Semi-Annual
+Next Review Date: July 09, 2026
+Approval: Digitspots Technical Director

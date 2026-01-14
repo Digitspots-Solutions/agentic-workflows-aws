@@ -1,0 +1,41 @@
+Workload Health Monitoring Standard
+Digitspots AI Competency Submission
+Document Version: 2.0
+Last Updated: January 12, 2026
+Owner: Digitspots Cloud Operations Team
+Applies To: LAUTECH Implementation (OPE-001)
+
+REQUIREMENT:
+Define, monitor and analyze customer workload health KPIs. Establish the capability to run, monitor and improve operational procedure by defining metrics and log aggregation.
+
+Executive Summary
+Digitspots implements a specific Workload Health Standard for all AI deployments. For LAUTECH, this involves a "Gold/Silver" signal framework implemented via Amazon CloudWatch to monitor the health of the Agentic AI stack.
+
+1. Metric & Log Definition
+We define two tiers of operational metrics:
+
+*   **1.1 Gold Signals (User Experience)**:
+    *   *Latency*: Time taken for Bedrock to generate a response (Target: <5s).
+    *   *Error Rate*: Percentage of failed agent invocations (Target: <1%).
+*   **1.2 Silver Signals (Infrastructure)**:
+    *   *Saturation*: RDS CPU Utilization and ECS Memory usage.
+    *   *Traffic*: Number of concurrent student sessions.
+
+2. Operational Implementation
+**Policy**: All metrics and logs must be aggregated in a central observability platform.
+
+*   **2.1 Log Aggregation**:
+    *   Application logs (Streamlit) and Infrastructure logs (RDS) are shipped to **CloudWatch Logs**.
+    *   Logs are structured (JSON) to allow for error parsing.
+*   **2.2 Alerting Thresholds**:
+    *   **CRITICAL**: Agent Error Rate > 5% (Pages On-Call Engineer).
+    *   **WARNING**: RDS CPU > 85% (Notifies Slack Channel).
+
+3. Evidence Artifacts
+*   Dashboard Implementation: `setup/setup_monitoring.py`.
+*   SOP Reference: `OPE-002_Runbooks.txt`.
+
+Document Classification: Internal Use
+Review Cycle: Quarterly
+Next Review Date: April 09, 2026
+Approval: Digitspots Operations Manager

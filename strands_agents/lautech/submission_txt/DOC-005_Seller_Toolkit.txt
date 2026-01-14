@@ -1,0 +1,25 @@
+Seller Toolkit Guidelines
+Digitspots AI Competency Submission
+Document Version: 1.0
+Last Updated: January 09, 2026
+Owner: Digitspots Sales Team
+Applies To: LAUTECH Case Study
+
+Executive Summary
+Use this toolkit to position the Agentic AI solution to other Education customers. It contains the key assets needed to explain the value proposition, architecture, and success metrics of the LAUTECH implementation.
+
+1. Asset Inventory
+1.1 One-Pager
+*   **Title**: Transform Student Services with Intelligent AI Agents.
+*   **Focus**: 70% support workload reduction.
+
+1.2 Presentation Deck
+*   **Title**: LAUTECH Case Study.
+*   **Focus**: Technical architecture and business outcomes.
+
+Use these assets to drive new opportunities in the Education vertical.
+
+Document Classification: Partner Confidential
+Review Cycle: Quarterly
+Next Review Date: April 09, 2026
+Approval: Digitspots Sales Director

@@ -11,6 +11,11 @@ import os
 import subprocess
 from datetime import datetime
 import uuid
+import boto3
+import sys
+
+# Add parent directory to path to allow importing db_utils
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # ============================================================================
 # PAGE CONFIG
@@ -389,61 +394,85 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================================
-# AGENT INVOCATION
+# AGENT INVOCATION - Using boto3 SDK
 # ============================================================================
 
-AGENT_ID = os.getenv('LAUTECH_AGENT_ID', 'lautech_agentcore-U7qNy1GPsE')
+import boto3
+
+# Agent configuration from environment variables
+# Agent configuration from environment variables
+AGENT_ID = os.getenv('LAUTECH_AGENT_ID', 'lautech_agentcore-KLZaaW7AR6')
+REGION = os.getenv('AWS_REGION', 'us-east-1')
+ACCOUNT_ID = '715841330456'
+
+# Initialize Bedrock AgentCore Runtime client
+bedrock_client = boto3.client('bedrock-agentcore', region_name=REGION)
 
 def invoke_agent(prompt: str, session_id: str = None):
-    """Invoke the deployed AgentCore agent via CLI"""
+    """Invoke the deployed AgentCore agent via boto3 SDK"""
     try:
-        payload = json.dumps({"prompt": prompt})
-        cmd = ['agentcore', 'invoke', payload]
-
-        if session_id:
-            cmd.extend(['--session-id', session_id])
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=90
+        # Construct ARN
+        agent_arn = f"arn:aws:bedrock-agentcore:{REGION}:{ACCOUNT_ID}:runtime/{AGENT_ID}"
+        
+        response = bedrock_client.invoke_agent_runtime(
+            agentRuntimeArn=agent_arn,
+            payload=json.dumps({
+                'prompt': prompt,
+                'session_id': session_id or str(uuid.uuid4()),  # Pass in payload for session isolation
+                'actor_id': 'web_user'
+            }).encode('utf-8'),
+            runtimeSessionId=session_id or str(uuid.uuid4())
         )
-
-        if result.returncode != 0:
-            return f"⚠️ Agent error: {result.stderr}"
-
-        output = result.stdout.strip()
-
-        # Extract response after "Response:" line
-        if "Response:" in output:
-            return output.split("Response:", 1)[1].strip()
-
-        # Fallback: try JSON parsing
-        try:
-            data = json.loads(output)
-            if isinstance(data, dict):
-                return data.get('output') or data.get('response') or data.get('message') or str(data)
-            return str(data)
-        except json.JSONDecodeError:
-            # Remove box characters
-            for char in ['╭', '╮', '╰', '╯', '│', '─']:
-                output = output.replace(char, '')
-            return output.strip()
-
-    except subprocess.TimeoutExpired:
-        return "⚠️ Request timeout - please try again with a simpler query."
-    except FileNotFoundError:
-        return "⚠️ AgentCore CLI not found. Please ensure it's installed and in your PATH."
+        
+        # Read and parse response
+        resp_body = response.get('response').read().decode('utf-8')
+        resp_json = json.loads(resp_body)
+        
+        if isinstance(resp_json, str):
+            return resp_json
+            
+        # Extract output
+        output = resp_json.get('output') or resp_json.get('completion') or resp_json.get('response') or resp_json.get('message')
+        if output:
+            return output
+            
+        return "I received your question but couldn't generate a response. Please try again."
+        
+    except bedrock_client.exceptions.ThrottlingException:
+        return "⚠️ Too many requests - please wait a moment and try again."
+    except bedrock_client.exceptions.ValidationException as e:
+        return f"⚠️ Invalid request: {str(e)}"
     except Exception as e:
-        return f"⚠️ Error: {str(e)}"
+        error_msg = str(e)
+        if 'timeout' in error_msg.lower():
+            return "⚠️ Request timeout - please try again with a simpler query."
+        return f"⚠️ Error connecting to assistant: {error_msg}"
+
+
+def stream_response(text: str, delay: float = 0.02):
+    """Generator that yields text in chunks for streaming display (typewriter effect)"""
+    import time
+    # Yield in small chunks for smoother appearance
+    chunk_size = 3  # Characters per chunk
+    for i in range(0, len(text), chunk_size):
+        yield text[i:i + chunk_size]
+        time.sleep(delay)
 
 # ============================================================================
 # SESSION STATE
 # ============================================================================
 
+# Admin Access (External Link)
+with st.sidebar:
+    st.markdown("### 🔐 Admin Access")
+    st.link_button(
+        "Open Admin Panel", 
+        "http://lautech-admin-alb-782012547.us-east-1.elb.amazonaws.com/",
+        help="Access the administrative dashboard in a new tab"
+    )
 if 'session_id' not in st.session_state:
-    st.session_state.session_id = str(uuid.uuid4())
+    # Bedrock requires min 33 chars. Hex is 32. 
+    st.session_state.session_id = f"sess_{uuid.uuid4().hex}"
 
 if 'messages' not in st.session_state:
     st.session_state.messages = []
@@ -554,6 +583,32 @@ if len(st.session_state.messages) > 0 or st.session_state.is_typing:
             <div class="typing-dot"></div>
         </div>
         """, unsafe_allow_html=True)
+    
+    # Execute Agent Logic if ready (Inside the container!)
+    if st.session_state.is_typing and st.session_state.pending_query:
+        # Get response from agent
+        response = invoke_agent(
+            st.session_state.pending_query,
+            st.session_state.session_id
+        )
+
+        # Stream the response
+        with st.chat_message("assistant", avatar="🎓"):
+            st.write_stream(stream_response(response))
+        
+        # Add response to messages for history
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": response
+        })
+
+        # Update counter
+        st.session_state.query_count += 1
+
+        # Reset typing state
+        st.session_state.is_typing = False
+        st.session_state.pending_query = None
+        st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -584,7 +639,7 @@ col1, col2, col3 = st.columns([1, 1, 3])
 with col1:
     if st.button("🗑️ Clear Chat", key="clear", use_container_width=True):
         st.session_state.messages = []
-        st.session_state.session_id = str(uuid.uuid4())
+        st.session_state.session_id = f"sess_{uuid.uuid4().hex}"
         st.session_state.query_count = 0
         st.rerun()
 
@@ -598,29 +653,8 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ============================================================================
-# AGENT INVOCATION - RUNS AT END AFTER UI IS RENDERED
-# ============================================================================
 
-if st.session_state.is_typing and st.session_state.pending_query:
-    # Get response from agent
-    response = invoke_agent(
-        st.session_state.pending_query,
-        st.session_state.session_id
-    )
 
-    # Add response to messages
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": response
-    })
 
-    # Update counter
-    st.session_state.query_count += 1
 
-    # Reset typing state
-    st.session_state.is_typing = False
-    st.session_state.pending_query = None
 
-    # Rerun to show response
-    st.rerun()

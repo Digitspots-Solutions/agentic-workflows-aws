@@ -1,0 +1,49 @@
+Compute Practice Implementation
+Digitspots AI Competency Submission
+Document Version: 2.0
+Last Updated: January 14, 2026
+Owner: Digitspots AI Practice Team
+Applies To: LAUTECH Customer Example (AGAIPS-004)
+
+REQUIREMENT:
+Demonstrate utilization of AWS managed compute services (Bedrock, ECS, Lambda) with optimized security posture and cost efficiency. Provide technical documentation of selection and optimization strategies.
+
+Executive Summary
+Digitspots employs a "Serverless-First" compute strategy to minimize operational overhead for our customers. For LAUTECH, we architected a solution combining **Amazon Bedrock AgentCore** for the cognitive runtime and **Amazon ECS Fargate** for the user interface, ensuring a zero-maintenance, highly scalable infrastructure.
+
+1. Compute Service Selection
+We explicitly selected AWS managed services over self-managed EC2 to reduce the "undifferentiated heavy lifting" of patching and scaling.
+
+*   **1.1 Agent Runtime: Amazon Bedrock AgentCore**
+    *   *Role*: Executes the agent's reasoning loop and tool orchestration.
+    *   *Why Selected*: It provides a fully managed environment for the Claude 3.5 Haiku model, handling context window management and prompt iteration automatically.
+    *   *Optimization*: By using the serverless AgentCore, we eliminated the need for a persistent "Orchestrator Fleet," saving ~$200/month in idle EC2 costs.
+*   **1.2 User Interface: Amazon ECS Fargate**
+    *   *Role*: Hosts the Streamlit frontend application.
+    *   *Why Selected*: Fargate abstracts the underlying cluster management. We needed long-running WebSocket connections for the chat interface, which ruled out API Gateway/Lambda.
+    *   *Optimization*: We utilized **Fargate Spot** capacity providers for the development environment, reducing compute costs by up to 70%.
+
+2. Security Posture Optimization
+Our compute implementation enforces a "Zero Trust" architecture at the compute level.
+
+*   **Identity Isolation**: The ECS tasks and AgentCore runtime operate with independent IAM Roles (`ecsTaskExecutionRole` vs. `BedrockAgentRole`). This ensures that if the UI is compromised, the attacker cannot purely invoke the agent without valid signed requests.
+*   **Network Isolation**:
+    *   Fargate tasks are deployed in private subnets (or public with restricted SGs).
+    *   Security Groups strictly limit ingress to port 8501 from the Application Load Balancer only.
+*   **Immutable Infrastructure**: We deploy container images from ECR. No SSH access is enabled or required for the containers, eliminating a major attack vector.
+
+3. Implementation Guide
+The deployment is fully automated via our Python Infrastructure-as-Code definitions:
+
+1.  **Build**: The Docker image `lautech-dashboards` is built and pushed to ECR with image scanning enabled.
+2.  **Define**: The `register_task_definition` function (in `deploy_ecs.py`) injects environment variables for `AWS_REGION` and `AGENT_ALIAS_ID` at runtime, keeping secrets out of the image.
+3.  **Deploy**: The ECS Service is updated with `forceNewDeployment=True`, triggering a rolling update that drains connections from old tasks before termination.
+
+4. Evidence Artifacts
+*   **Deployment Logic**: `setup/deploy_ecs.py` (demonstrates Fargate configuration).
+*   **Agent Logic**: `lautech_agentcore.py` (demonstrates serverless handler).
+
+Document Classification: Internal Use
+Review Cycle: Quarterly
+Next Review Date: April 14, 2026
+Approval: Digitspots Technical Director

@@ -1,0 +1,81 @@
+AWS AI Competency - Common Practice Requirements
+Section 3: Common Requirements (ACCT, OPE, REL, SEC, DOC)
+
+This document details the operational, security, and documentation standards applied in the LAUTECH implementation.
+
+--------------------------------------------------------------------------------
+DOCUMENTATION (DOC)
+--------------------------------------------------------------------------------
+DOC-001: Architecture Diagram
+Status: Compliant
+Evidence: A comprehensive architectural diagram depicting the interaction between Student/Admin users, CloudFront, ALB, ECS Fargate, AgentCore, and Amazon RDS is provided in the Architecture Guide.
+
+DOC-002: Deployment Guide
+Status: Compliant
+Evidence: A complete deployment guide (PRODUCTION.md) exists, detailing prerequisites, environment variable configuration, IAM permission setup, and step-by-step deployment instructions for both the AgentCore runtime and the Web Dashboard.
+
+DOC-003: Customer Documentation
+Status: Compliant
+Evidence: End-user documentation (DATA_GUIDE.md) explains the data schema, query capabilities, and limitations of the system to university administrators.
+
+DOC-005: Seller Toolkit
+Status: Compliant
+Evidence: A Customer One-Pager and Customer Presentation Deck have been created to support sales and marketing motions. (See 04_Seller_Toolkit_Content.txt).
+
+--------------------------------------------------------------------------------
+SECURITY (SEC / ACCT / NETSEC)
+--------------------------------------------------------------------------------
+ACCT-001: Account Governance
+Status: Compliant
+Evidence: The implementation enforces multi-factor authentication (MFA) for all root and IAM user access. AWS CloudTrail is enabled in all regions to log all API activity for auditing purposes.
+
+ACCT-002: Identity Best Practices
+Status: Compliant
+Evidence: No long-term IAM user access keys are used for application execution. The solution relies strictly on IAM Roles (Instance Profiles and Task Roles) for ECS tasks and Lambda functions to assume temporary credentials.
+
+NETSEC-001: Network Security
+Status: Compliant
+Evidence: The architecture utilizes a Virtual Private Cloud (VPC). The RDS database resides in a private subnet, accessible only from the ECS tasks and AgentCore Lambda functions via Security Group rules permitting traffic on port 5432. Public access to the dashboards is restricted to HTTP/HTTPS via the Application Load Balancer.
+
+NETSEC-002: Data Encryption
+Status: Compliant
+Evidence:
+- Encryption at Rest: Amazon RDS storage is encrypted using AWS KMS keys.
+- Encryption in Transit: All data transmission between the application and database, as well as between the user and the load balancer, is encrypted via TLS/SSL.
+
+--------------------------------------------------------------------------------
+OPERATIONAL EXCELLENCE (OPE)
+--------------------------------------------------------------------------------
+OPE-001: Workload Health
+Status: Compliant
+Evidence: An Amazon CloudWatch Dashboard has been configured to monitor key performance indicators (KPIs) including:
+- Agent Invocation Count
+- Average Latency
+- Invocation Errors
+- Database CPU Utilization and Connection Count
+
+OPE-002: Runbooks
+Status: Compliant
+Evidence: Operational runbooks are documented in the Production Guide, covering procedures for database migration, backup restoration, and scaling adjustments.
+
+OPE-003: Deployment Testing
+Status: Compliant
+Evidence: A pre-deployment testing protocol is defined, utilizing a standard set of test queries (Test Set) to validate agent responses and tools before promoting changes to production.
+
+--------------------------------------------------------------------------------
+RELIABILITY (REL)
+--------------------------------------------------------------------------------
+REL-001: Infrastructure as Code (IaC)
+Status: Compliant
+Evidence: The entire infrastructure (ECS, ALB, Security Groups, IAM Roles) is defined and provisioned via Python scripts (using boto3) located in the setup/ directory, ensuring repeatable and consistent deployments.
+
+REL-002: Disaster Recovery
+Status: Compliant
+Evidence: The Disaster Recovery strategy utilizes Amazon RDS automated backups (snapshots) with a 7-day retention period. A manual snapshot process is also documented for major version upgrades.
+
+--------------------------------------------------------------------------------
+COST OPTIMIZATION (COST)
+--------------------------------------------------------------------------------
+COST-001: Total Cost of Ownership (TCO)
+Status: Compliant
+Evidence: A cost analysis has been performed. The architecture leverages serverless (AgentCore) and Spot Instances (ECS Fargate Spot) where appropriate to minimize idle costs. The estimated run-rate is approximately $15-25/month for the current scale.

@@ -85,30 +85,63 @@ Memory: AgentCore Memory Service (STM + LTM)
 
 ## 🗄️ Database Migration
 
+### Overview
+
+The LAUTECH system has been successfully migrated from SQLite (local development) to RDS PostgreSQL (production). This provides:
+- **High Availability**: Multi-AZ deployment for automatic failover
+- **Automated Backups**: 7-day retention with automated snapshots
+- **Scalability**: Easy to scale storage and compute resources
+- **Security**: Encryption at rest and in transit
+
 ### Step 1: Create RDS PostgreSQL Instance
 
+✅ **COMPLETED** - Instance Details:
+- **Identifier**: `lautech-agentcore-db`
+- **Endpoint**: `lautech-agentcore-db.c52464mmo8tw.us-east-1.rds.amazonaws.com:5432`
+- **Engine**: PostgreSQL 16.11
+- **Instance Class**: db.t3.micro (cost-effective, eligible for free tier)
+- **Storage**: 20 GB gp3 (General Purpose SSD)
+- **Status**: ✅ Available
+
+**Credentials stored in AWS Secrets Manager:**
+- Secret Name: `lautech/rds/credentials`
+- Secret ARN: `arn:aws:secretsmanager:us-east-1:929557547206:secret:lautech/rds/credentials-cbsz1j`
+
+To recreate or scale up for production:
+
 ```bash
-# Create RDS instance
+# Create RDS instance (already done, but for reference)
+python setup_rds.py
+
+# Or manually via AWS CLI:
 aws rds create-db-instance \
-  --db-instance-identifier lautech-db-prod \
-  --db-instance-class db.t3.medium \
+  --db-instance-identifier lautech-agentcore-db \
+  --db-instance-class db.t3.micro \
   --engine postgres \
-  --master-username lautechadmin \
-  --master-user-password $(aws secretsmanager get-secret-value --secret-id lautech/db/master --query SecretString --output text) \
-  --allocated-storage 100 \
+  --engine-version 16.11 \
+  --master-username lautech_admin \
+  --master-user-password <from-secrets-manager> \
+  --allocated-storage 20 \
   --storage-type gp3 \
   --storage-encrypted \
-  --multi-az \
   --db-name lautech_db \
-  --vpc-security-group-ids sg-xxxxxxxxx \
-  --db-subnet-group-name lautech-db-subnet-group \
-  --backup-retention-period 30 \
+  --vpc-security-group-ids sg-02decd490d31bc78a \
+  --db-subnet-group-name lautech-agentcore-db-subnet-group \
+  --publicly-accessible \
+  --backup-retention-period 7 \
   --preferred-backup-window "03:00-04:00" \
   --preferred-maintenance-window "sun:04:00-sun:05:00" \
   --enable-cloudwatch-logs-exports '["postgresql"]' \
-  --deletion-protection \
-  --tags Key=Environment,Value=Production Key=Project,Value=LAUTECH
+  --deletion-protection false \
+  --tags Key=Environment,Value=Production Key=Project,Value=LAUTECH-AgentCore
 ```
+
+**For Production (Recommended Upgrades):**
+- Instance Class: `db.t3.medium` or `db.t3.large`
+- Multi-AZ: Enable with `--multi-az`
+- Storage: Increase to 100 GB
+- Deletion Protection: Enable with `--deletion-protection`
+- Backup Retention: Increase to 30 days
 
 ### Step 2: Export SQLite Data
 

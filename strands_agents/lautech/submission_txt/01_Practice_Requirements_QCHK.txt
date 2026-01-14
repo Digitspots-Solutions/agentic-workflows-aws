@@ -1,0 +1,127 @@
+AWS AI Competency - Agentic AI Consulting Services
+Section 1: Agentic AI Practice Requirements (QCHK)
+
+This document details the compliance of Digitsspots Solutions (LAUTECH Implementation) with the Agentic AI Consulting Services Practice Requirements.
+
+--------------------------------------------------------------------------------
+QCHK-001: Model Expertise (Inference)
+--------------------------------------------------------------------------------
+Requirement: Demonstrate expertise in using models from Amazon Bedrock, Bedrock Marketplace, or Amazon SageMaker AI/JumpStart.
+
+Response: YES
+
+Evidence:
+The LAUTECH multi-agent system leverages Amazon Bedrock for all foundation model inference. Specifically, it utilizes the Anthropic Claude 3.5 Haiku model (us.anthropic.claude-3-5-haiku-20241022-v1:0), accessed via the Bedrock Runtime API through the Strands Agents SDK.
+
+Selection Rationale:
+Claude 3.5 Haiku was selected for its optimal balance of latency (<2 seconds for typical queries) and cost-effectiveness for high-volume student interactions, while maintaining sufficient reasoning capability for tool selection and response synthesis.
+
+Code Reference (lautech_agentcore.py):
+bedrock_model = BedrockModel(
+    model_id="us.anthropic.claude-3-5-haiku-20241022-v1:0",
+    temperature=0.7,
+    guardrail_config={...}
+)
+
+--------------------------------------------------------------------------------
+QCHK-002: Framework Expertise (SDKs/Tooling)
+--------------------------------------------------------------------------------
+Requirement: Demonstrate expertise in using AWS-compatible agent development frameworks.
+
+Response: YES
+
+Evidence:
+We utilize the Strands Agents SDK, an AWS-native framework designed for building agentic applications. Our implementation leverages key Strands features including:
+1. Tool Decorators (@tool): For wrapping Python functions as agent-callable tools.
+2. Agent Orchestration: Managing the interaction between the LLM and the tools.
+3. System Prompts: Defining agent behavior and constraints.
+4. Session Management: Integrating with AgentCore Memory for persistent state.
+
+Framework implementation allows for modular extension of agent capabilities without core architectural changes.
+
+--------------------------------------------------------------------------------
+QCHK-003: Interoperability
+--------------------------------------------------------------------------------
+Requirement: Demonstrate expertise in implementing interoperability solutions for agent applications.
+
+Response: YES
+
+Evidence:
+The solution implements a multi-agent orchestrator pattern. An orchestrator agent interprets user intent and routes requests to four specialist tool agents:
+1. Course Information Agent
+2. Financial Services Agent
+3. Academic Calendar Agent
+4. Hostel Allocation Agent
+
+Interoperability is achieved through:
+- Structured JSON schemas for tool inputs and outputs.
+- Shared session context maintained via AgentCore Memory.
+- Integration with external interfaces including a Web Dashboard (Streamlit) and WhatsApp Business API.
+
+--------------------------------------------------------------------------------
+QCHK-004: Security Controls
+--------------------------------------------------------------------------------
+Requirement: Demonstrate expertise in implementing comprehensive agent security controls.
+
+Response: YES
+
+Evidence:
+The solution implements a defense-in-depth security strategy using AWS managed services:
+
+1. Identity & Access Management (IAM):
+   - Granular IAM roles for AgentCore execution and ECS tasks.
+   - Least-privilege policies restricted to specific resources.
+
+2. Secrets Management:
+   - AWS Secrets Manager stores database credentials and API keys.
+   - No hardcoded secrets in codebase or environment variables.
+
+3. Network Security:
+   - VPC Security Groups restrict ingress/egress for ECS and RDS.
+   - Database resides in a private subnet (or restricted public access with IP allowlisting).
+   - Encryption in transit (TLS/SSL) for all database connections.
+
+4. Observability:
+   - Comprehensive CloudWatch Logs for agent traces and system events.
+
+--------------------------------------------------------------------------------
+QCHK-005: Responsible AI
+--------------------------------------------------------------------------------
+Requirement: Demonstrate expertise in implementing comprehensive responsible AI controls.
+
+Response: YES
+
+Evidence:
+We have implemented Amazon Bedrock Guardrails to enforce responsible AI practices. The guardrail configuration ensures safety and alignment with university policies.
+
+Guardrail Configuration:
+1. Content Filtering: High-strength filters for sexual content, violence, hate speech, and misconduct.
+2. Topic Blocking: Explicit denial configuration for:
+   - Political content and election discussions.
+   - Religious debates.
+   - Illegal activities (e.g., academic dishonesty).
+   - Personal advice (medical/legal).
+3. PII Protection: Automated redaction/anonymization of Personally Identifiable Information (emails, phone numbers).
+4. Prompt Attack Defense: Enabled to prevent jailbreak attempts.
+
+Test Procedure:
+Automated testing validates that prohibited inputs trigger the appropriate blocked response message: "I apologize, but I cannot assist with that request..."
+
+--------------------------------------------------------------------------------
+QCHK-006: Managed Compute Infrastructure
+--------------------------------------------------------------------------------
+Requirement: Demonstrate expertise in deploying agent workloads on AWS managed compute services.
+
+Response: YES
+
+Evidence:
+The solution utilizes a fully serverless and managed compute architecture:
+
+1. Agent Runtime: Amazon Bedrock AgentCore (Lambda-based runtime) for executing agent logic and tool processing.
+2. Application Hosting: AWS ECS Fargate for hosting the student and admin web dashboards.
+3. Database: Amazon RDS for PostgreSQL (Managed Relational Database Service).
+4. Load Balancing: Application Load Balancer (ALB) for secure traffic distribution.
+
+Deployment Artifacts:
+- AgentCore ARN: arn:aws:bedrock-agentcore:us-east-1:715841330456:runtime/lautech_agentcore-KLZaaW7AR6
+- ECR Repository: 715841330456.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-lautech_agentcore

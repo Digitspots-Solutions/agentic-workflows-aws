@@ -1,0 +1,23 @@
+Customer Documentation Guidelines
+Digitspots AI Competency Submission
+Document Version: 1.0
+Last Updated: January 09, 2026
+Owner: Digitspots Technical Team
+Applies To: LAUTECH AWS Account
+
+Executive Summary
+We strictly adhere to the requirement of providing end-user documentation. The "LAUTECH Data Guide" empowers university staff to understand and operate the system effectively.
+
+1. Artifact Details
+1.1 Content Scope
+The provided documentation explains:
+*   **Data Sources**: Which database tables the agent can access.
+*   **Limitations**: What the agent cannot do (e.g., "Change Grades").
+*   **Interpretation**: How to understand the agent's responses.
+
+This transparency builds trust and facilitates adoption among non-technical administrative staff.
+
+Document Classification: Customer Facing
+Review Cycle: Annual
+Next Review Date: January 09, 2027
+Approval: Digitspots Account Manager

@@ -1,0 +1,95 @@
+Infrastructure Automation Standard (Terraform)
+Digitspots AI Competency Submission
+Document Version: 2.2
+Last Updated: January 14, 2026
+Owner: Digitspots Cloud Operations Team
+Applies To: LAUTECH AWS Account (REL-001)
+
+REQUIREMENT:
+Automate deployment and leverage infrastructure-as-code tools. Provide written description and an example template (e.g., CloudFormation/Terraform).
+
+Executive Summary
+Digitspots utilizes a strict "Infrastructure as Code" (IaC) methodology powered by **HashiCorp Terraform**. For the LAUTECH project, the entire stack is defined in declarative HCL to ensure state consistency and reproducible deployments.
+
+1. IaC Strategy: Terraform
+**Policy**: All infrastructure changes must be defined in Terraform modules and applied via CI/CD pipelines.
+
+*   **1.1 Tooling Choice**:
+    *   **Core**: Terraform (OpenTofu compatible).
+    *   **Provider**: AWS Provider v5.x.
+    *   **Backend**: S3 Bucket with DynamoDB locking.
+*   **1.2 Rationale**: 
+    We selected Terraform over Boto3/CloudFormation for:
+    *   **State Tracking**: `.tfstate` allows drift detection.
+    *   **Modularity**: Reusable `modules/rds` and `modules/ecs` patterns.
+
+2. Automated Workflows
+Our deployment process follows a standard `init -> plan -> apply` workflow:
+*   **Plan**: `terraform plan` is run on every Pull Request.
+*   **Apply**: `terraform apply` is executed after Code Review approval.
+
+3. Example Template (Evidence)
+Below is the core `main.tf` template used to provision the Agent's compute environment, demonstrating our use of the AWS Provider and Variables.
+
+```hcl
+# main.tf - LAUTECH Agent Infrastructure
+
+provider "aws" {
+  region = var.aws_region
+  default_tags {
+    tags = {
+      Project     = "LAUTECH-AgentCore"
+      Environment = var.environment
+      ManagedBy   = "Terraform"
+    }
+  }
+}
+
+# Backend Configuration (State Locking)
+terraform {
+  backend "s3" {
+    bucket         = "lautech-terraform-state"
+    key            = "prod/agent.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
+  }
+}
+
+# Module: RDS Database (Persistence)
+module "rds_postgres" {
+  source = "./modules/rds"
+
+  identifier     = "lautech-db-prod"
+  instance_class = "db.t3.micro"
+  db_name        = "lautech_core"
+  username       = "db_admin"
+  
+  # Security: Pass in Private Subnets only
+  subnet_ids     = module.vpc.private_subnets
+}
+
+# Module: ECS Fargate (UI)
+module "ecs_dashboard" {
+  source = "./modules/ecs"
+
+  cluster_name   = "lautech-cluster"
+  service_name   = "student-dashboard"
+  cpu            = 512
+  memory         = 1024
+  
+  # Inject DB Credentials from Secrets Manager (Not plaintext)
+  environment_vars = [
+    { name = "DB_SECRET_ARN", value = module.rds_postgres.secret_arn }
+  ]
+}
+```
+
+4. Evidence Artifacts
+*   Template File: `infrastructure/main.tf` (See section 3 above)
+*   Pipeline Config: `bitbucket-pipelines.yml`
+
+Document Classification: Internal Use
+Review Cycle: Semi-Annual
+Next Review Date: July 09, 2026
+Approval: Digitspots DevOps Lead
